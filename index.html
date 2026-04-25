@@ -2575,7 +2575,7 @@ function guessHighLow(guess) {
     const alive = gameState.players.filter(p => p.alive);
     if (alive.length <= 1) endGame(alive[0]);
     else initHighLow(document.getElementById('game-area'));
-  }, 2000);
+  }, 4000);
 }
 
 // ==================== LEVEL 2: GUESS NUMBER ====================
@@ -2677,13 +2677,13 @@ function doGuess(val) {
 
   // 检查人类玩家是否被淘汰
   if (!isHumanAlive()) {
-    setTimeout(() => { hideResult(); endGame(null); }, 2000);
+    setTimeout(() => { hideResult(); endGame(null); }, 4000);
     return;
   }
 
   const alive = gameState.players.filter(p => p.alive);
   if (alive.length <= 1) {
-    setTimeout(() => { hideResult(); endGame(alive[0]); }, 2000);
+    setTimeout(() => { hideResult(); endGame(alive[0]); }, 4000);
   } else {
     setTimeout(() => {
       hideResult();
@@ -2977,7 +2977,7 @@ function checkReactionEnd() {
       gameState.data.reactionResults = {};
       // 不增加turn，让initReaction重新计算
       broadcast({ type: 'gameState', state: gameState });
-      setTimeout(() => initReaction(document.getElementById('game-area')), 2000);
+      setTimeout(() => initReaction(document.getElementById('game-area')), 4000);
     }
   }
 }
@@ -3113,7 +3113,7 @@ function checkMindEnd() {
       gameState.data.mindResults = {};
       // 不增加turn，让initMindGame重新计算第一个未行动的AI
       broadcast({ type: 'gameState', state: gameState });
-      setTimeout(() => initMindGame(document.getElementById('game-area')), 3000);
+      setTimeout(() => initMindGame(document.getElementById('game-area')), 4500);
     }
   }
 }
@@ -3243,7 +3243,7 @@ function checkMinorityEnd() {
       // 清除所有玩家的已选择状态，让UI重新显示按钮
       broadcast({ type: 'gameAction', action: 'minorityReset', payload: {} });
       
-      setTimeout(() => initMinority(document.getElementById('game-area')), 2000);
+      setTimeout(() => initMinority(document.getElementById('game-area')), 4000);
       return;
     }
 
@@ -3268,7 +3268,7 @@ function checkMinorityEnd() {
         ['红', '蓝'], ['左', '右'], ['A', 'B'], ['是', '否']
       ]);
       broadcast({ type: 'gameState', state: gameState });
-      setTimeout(() => initMinority(document.getElementById('game-area')), 2000);
+      setTimeout(() => initMinority(document.getElementById('game-area')), 4000);
     }
   }
 }
@@ -3428,7 +3428,7 @@ function checkTrustEnd() {
     } else {
       gameState.data.trustChoices = {};
       broadcast({ type: 'gameState', state: gameState });
-      setTimeout(() => initTrust(document.getElementById('game-area')), 3000);
+      setTimeout(() => initTrust(document.getElementById('game-area')), 4500);
     }
   }
 }
@@ -3718,7 +3718,7 @@ function checkMafiaVoteEnd() {
       gameState.data.mafiaVotes = {};
       gameState.data.mafiaTimer = 15;
       broadcast({ type: 'gameState', state: gameState });
-      setTimeout(() => initMafia(document.getElementById('game-area')), 3000);
+      setTimeout(() => initMafia(document.getElementById('game-area')), 4500);
     }
   }
 }
@@ -3863,7 +3863,7 @@ function checkDinnerEnd() {
       ]);
       gameState.data.dinnerVotes = {};
       broadcast({ type: 'gameState', state: gameState });
-      setTimeout(() => initDinner(document.getElementById('game-area')), 2000);
+      setTimeout(() => initDinner(document.getElementById('game-area')), 4000);
     }
   }
 }
@@ -3966,7 +3966,7 @@ function handleWheelResult(payload) {
     case 'retry':
       addChat({ text: '🔄 再转一次' }, true);
       showResult('win', '再转一次', '命运给了第二次机会');
-      setTimeout(() => { hideResult(); initWheel(document.getElementById('game-area')); }, 1500);
+      setTimeout(() => { hideResult(); initWheel(document.getElementById('game-area')); }, 4000);
       return;
     case 'win':
       alive.filter(p => p.id !== current.id).forEach(p => p.alive = false);
