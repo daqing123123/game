@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>AI测试 - LAST GAME</title>
+<style>
+body { font-family: monospace; background: #1a1a2e; color: #eee; padding: 20px; }
+.log { margin: 5px 0; padding: 5px; background: rgba(255,255,255,0.05); border-radius: 4px; }
+.success { color: #2ecc71; }
+.error { color: #e74c3c; }
+.info { color: #3498db; }
+</style>
+</head>
+<body>
+<h2>AI 行为测试</h2>
+<div id="logs"></div>
+
+<script>
+function log(msg, type = 'info') {
+  const div = document.createElement('div');
+  div.className = `log ${type}`;
+  div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  document.getElementById('logs').appendChild(div);
+}
+
+// 模拟游戏状态
+const mockGameState = {
+  level: 5,
+  turn: 0,
+  players: [
+    { id: 'human1', name: '玩家1', alive: true, isAI: false },
+    { id: 'ai1', name: 'AI-1', alive: true, isAI: true },
+    { id: 'ai2', name: 'AI-2', alive: true, isAI: true },
+    { id: 'human2', name: '玩家2', alive: true, isAI: false },
+    { id: 'ai3', name: 'AI-3', alive: true, isAI: true }
+  ],
+  data: {
+    mindResults: {},
+    mindTarget: 50
+  }
+};
+
+// 模拟 processAITurn 逻辑
+function testProcessAITurn() {
+  log('开始测试 processAITurn 逻辑', 'info');
+  
+  let turn = 0;
+  const maxTurns = 20;
+  
+  function processTurn() {
+    if (turn >= maxTurns) {
+      log('测试完成', 'success');
+      return;
+    }
+    
+    const alive = mockGameState.players.filter(p => p.alive);
+    const current = alive[turn % alive.length];
+    
+    if (!current) {
+      log('没有存活玩家', 'error');
+      return;
+    }
+    
+    log(`Turn ${turn}: ${current.name} (${current.isAI ? 'AI' : '人类'})`, 'info');
+    
+    if (!current.isAI) {
+      // 模拟修复后的逻辑
+      const level = mockGameState.level;
+      const data = mockGameState.data;
+      let alreadyActed = false;
+      
+      if (level === 5 && data.mindResults && data.mindResults[current.id] !== undefined) alreadyActed = true;
+      
+      if (alreadyActed) {
+        log(`  ${current.name} 已行动，继续下一个`, 'success');
+        turn++;
+        setTimeout(processTurn, 100);
+        return;
+      }
+      
+      // 对于同时行动关卡，跳过未行动的人类玩家
+      if (level >= 5 && level <= 9) {
+        log(`  ${current.name} 未行动，跳过继续触发AI`, 'info');
+        turn++;
+        setTimeout(processTurn, 100);
+        return;
+      }
+      
+      log(`  等待人类玩家: ${current.name}`, 'info');
+      return;
+    }
+    
+    // AI 行动
+    log(`  ${current.name} 执行行动`, 'success');
+    mockGameState.data.mindResults[current.id] = Math.floor(Math.random() * 100);
+    turn++;
+    setTimeout(processTurn, 100);
+  }
+  
+  processTurn();
+}
+
+// 测试场景1：人类玩家未行动，AI应该继续执行
+log('=== 测试场景1：同时行动关卡，人类未行动 ===', 'info');
+testProcessAITurn();
+
+// 测试场景2：所有人类已行动，AI应该正常执行
+setTimeout(() => {
+  log('\n=== 测试场景2：所有人类已行动 ===', 'info');
+  mockGameState.data.mindResults = {
+    'human1': 30,
+    'human2': 70
+  };
+  mockGameState.turn = 0;
+  testProcessAITurn();
+}, 3000);
+
+</script>
+</body>
+</html>

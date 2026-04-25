@@ -1,0 +1,4190 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAST GAME — 最后的游戏</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+:root {
+  --red: #c0392b;
+  --red-glow: #e74c3c;
+  --gold: #f39c12;
+  --dark: #0a0a0f;
+  --darker: #050508;
+  --panel: rgba(10,10,20,0.92);
+  --border: rgba(192,57,43,0.4);
+  --text: #e8e0d0;
+  --muted: #7a7060;
+  --green: #27ae60;
+  --green-glow: #2ecc71;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--darker);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(192,57,43,0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 50%, rgba(243,156,18,0.02) 0%, transparent 50%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+#three-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  opacity: 0.15;
+}
+
+#ui {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.screen {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+  transition: opacity 0.6s ease;
+}
+.screen.hidden { opacity: 0; pointer-events: none; }
+
+/* Title */
+.title-block {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.title-en {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(10px, 1.5vw, 14px);
+  letter-spacing: 0.5em;
+  color: var(--red-glow);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+.title-main {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+  text-shadow: 0 0 60px rgba(192,57,43,0.5), 0 0 120px rgba(192,57,43,0.2);
+  letter-spacing: -0.02em;
+}
+
+.title-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(9px, 1.2vw, 12px);
+  color: var(--muted);
+  letter-spacing: 0.3em;
+  margin-top: 10px;
+}
+
+.divider {
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--red), transparent);
+  margin: 20px auto;
+}
+
+/* Panels */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 28px 36px;
+  width: min(420px, 90vw);
+  backdrop-filter: blur(20px);
+  position: relative;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: -1px; left: 20px; right: 20px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--red-glow), transparent);
+}
+
+.panel-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.3em;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+/* Inputs */
+input[type="text"] {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(192,57,43,0.3);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  letter-spacing: 0.1em;
+}
+
+input[type="text"]:focus {
+  border-color: var(--red-glow);
+  box-shadow: 0 0 12px rgba(231,76,60,0.15);
+}
+
+input::placeholder { color: var(--muted); }
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.btn-primary {
+  background: var(--red);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--red-glow);
+  box-shadow: 0 0 24px rgba(231,76,60,0.4);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover {
+  border-color: var(--red-glow);
+  color: var(--red-glow);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Menu */
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(320px, 80vw);
+}
+
+.menu-btn {
+  padding: 16px 32px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-btn:hover {
+  border-color: var(--red-glow);
+  box-shadow: 0 0 20px rgba(192,57,43,0.2);
+  transform: translateX(4px);
+}
+
+.menu-btn::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: 3px; height: 100%;
+  background: var(--red);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.menu-btn:hover::before { opacity: 1; }
+
+/* User info */
+.user-info {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+.user-info span {
+  color: var(--text);
+  display: block;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* Level select */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: min(500px, 92vw);
+  max-height: 65vh;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.level-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.level-card:hover {
+  border-color: var(--red-glow);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(192,57,43,0.2);
+}
+
+.level-card .lv-num {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--red-glow);
+  margin-bottom: 6px;
+}
+
+.level-card .lv-name {
+  font-size: 16px;
+  color: var(--text);
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.level-card .lv-players {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.level-card .lv-desc {
+  font-size: 14px;
+  color: var(--text);
+  margin-top: 10px;
+  line-height: 1.6;
+  background: rgba(0,0,0,0.3);
+  padding: 10px;
+  border-radius: 4px;
+}
+
+/* Room */
+.room-header {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.room-code {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 28px;
+  letter-spacing: 0.3em;
+  color: var(--gold);
+  text-shadow: 0 0 20px rgba(243,156,18,0.4);
+}
+
+.room-code-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.3em;
+  margin-bottom: 4px;
+}
+
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(320px, 80vw);
+  margin: 20px 0;
+}
+
+.player-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(192,57,43,0.2);
+  font-size: 13px;
+}
+
+.player-item .p-name { color: var(--text); }
+.player-item .p-status {
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.player-item .p-status.ready {
+  border-color: var(--green);
+  color: var(--green-glow);
+}
+.player-item .p-status.host {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* Chat */
+.chat-box {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: min(360px, 40vw);
+  height: 200px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.chat-msg {
+  margin-bottom: 4px;
+}
+
+.chat-msg .msg-name {
+  color: var(--red-glow);
+  margin-right: 6px;
+}
+
+.chat-msg .msg-text { color: var(--text); }
+
+.chat-msg .msg-system {
+  color: var(--gold);
+  font-style: italic;
+}
+
+.chat-input-row {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.chat-input-row input {
+  flex: 1;
+  border: none;
+  background: rgba(255,255,255,0.03);
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+}
+
+.chat-input-row button {
+  padding: 8px 16px;
+  background: var(--red);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+}
+
+/* Game area */
+#screen-game {
+  background: transparent;
+}
+
+.game-info {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.game-info .level-name {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 18px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.game-info .game-status {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+}
+
+/* Player status list (top-left corner) */
+.player-status-list {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.player-status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-status-item .status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green-glow);
+  flex-shrink: 0;
+}
+
+.player-status-item .status-dot.eliminated {
+  background: var(--red-glow);
+}
+
+.player-status-item .status-name {
+  color: var(--text);
+}
+
+.player-status-item .status-name.eliminated {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.player-status-item .status-label {
+  font-size: 10px;
+  padding: 1px 6px;
+  background: var(--red);
+  color: #fff;
+  margin-left: auto;
+}
+
+.game-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Cards */
+.card-display {
+  width: 120px;
+  height: 168px;
+  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: var(--red);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  position: relative;
+  border: 2px solid #fff;
+}
+
+.card-display .card-suit {
+  font-size: 60px;
+  line-height: 1;
+}
+
+.card-display .card-rank {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.card-display .card-rank-bottom {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  transform: rotate(180deg);
+}
+
+/* Game controls */
+.game-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.game-btn {
+  padding: 14px 32px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.game-btn:hover {
+  border-color: var(--red-glow);
+  box-shadow: 0 0 16px rgba(231,76,60,0.3);
+}
+
+.game-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Timer */
+.timer-bar {
+  width: 200px;
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  margin: 10px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.timer-bar .timer-fill {
+  height: 100%;
+  background: var(--red-glow);
+  transition: width 0.1s linear;
+}
+
+/* Shake animation for roulette */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-10px); }
+  20% { transform: translateX(10px); }
+  30% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  50% { transform: translateX(-5px); }
+  60% { transform: translateX(5px); }
+  70% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+  90% { transform: translateX(-1px); }
+}
+
+/* Result overlay */
+.result-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(5,5,8,0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: opacity 0.5s;
+}
+
+.result-overlay.hidden { opacity: 0; pointer-events: none; }
+
+.result-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(32px, 5vw, 56px);
+  margin-bottom: 16px;
+}
+
+.result-title.win { color: var(--green-glow); text-shadow: 0 0 40px rgba(46,204,113,0.4); }
+.result-title.lose { color: var(--red-glow); text-shadow: 0 0 40px rgba(231,76,60,0.4); }
+.result-title.draw { color: var(--gold); text-shadow: 0 0 40px rgba(243,156,18,0.4); }
+
+.result-desc {
+  font-size: 14px;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+  margin-bottom: 30px;
+}
+
+/* Number input for guess */
+.number-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.number-input-group input {
+  width: 100px;
+  text-align: center;
+  font-size: 24px;
+  padding: 10px;
+}
+
+/* Range display */
+.range-display {
+  font-size: 18px;
+  color: var(--gold);
+  letter-spacing: 0.2em;
+}
+
+/* Revolver */
+.revolver-cylinder {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid var(--border);
+  position: relative;
+  margin: 20px auto;
+}
+
+.revolver-chamber {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--border);
+}
+
+.revolver-chamber.active {
+  background: var(--red-glow);
+  box-shadow: 0 0 10px rgba(231,76,60,0.5);
+}
+
+.revolver-chamber.fired {
+  background: var(--muted);
+}
+
+/* Reaction game */
+.reaction-box {
+  width: 300px;
+  height: 200px;
+  background: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  transition: background 0.05s;
+  user-select: none;
+}
+
+.reaction-box.waiting {
+  background: var(--red);
+}
+
+.reaction-box.ready {
+  background: var(--green);
+}
+
+.reaction-box.clicked {
+  background: var(--dark);
+}
+
+/* Vote buttons */
+.vote-options {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.vote-btn {
+  padding: 12px 24px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+}
+
+.vote-btn:hover {
+  border-color: var(--red-glow);
+  box-shadow: 0 0 12px rgba(231,76,60,0.2);
+}
+
+.vote-btn.selected {
+  background: var(--red);
+  border-color: var(--red-glow);
+}
+
+/* Trust game */
+.trust-options {
+  display: flex;
+  gap: 20px;
+}
+
+.trust-btn {
+  padding: 16px 40px;
+  font-size: 16px;
+  letter-spacing: 0.3em;
+}
+
+/* Wheel of fortune */
+.fortune-wheel {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 4px solid var(--gold);
+  position: relative;
+  margin: 20px auto;
+  overflow: hidden;
+}
+
+.fortune-sector {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  transform-origin: 100% 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  text-align: center;
+  padding: 10px;
+}
+
+.fortune-pointer {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 20px solid var(--red-glow);
+  z-index: 10;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .level-grid { grid-template-columns: 1fr; }
+  .chat-box { width: calc(100% - 40px); height: 150px; }
+}
+
+/* Game screen chat box - avoid blocking game buttons */
+#game-chat-box {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 280px;
+  max-height: 200px;
+  z-index: 30;
+}
+
+@media (max-width: 768px) {
+  #game-chat-box {
+    width: calc(100% - 40px);
+    max-height: 120px;
+    bottom: 10px;
+    right: 10px;
+  }
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.pulse { animation: pulse 2s infinite; }
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.shake { animation: shake 0.3s ease-in-out; }
+
+/* Hide */
+.hidden { display: none !important; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+<!-- Three.js Canvas -->
+<canvas id="three-canvas"></canvas>
+
+<!-- UI Layer -->
+<div id="ui">
+
+  <!-- Name Entry Screen -->
+  <div id="screen-name" class="screen">
+    <div class="title-block">
+      <div class="title-en">A GAME OF LIFE AND DEATH</div>
+      <div class="title-main">最后的游戏</div>
+      <div class="title-sub">进入者，唯有胜者能离开</div>
+      <div class="divider"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">输入你的名字</div>
+      <input type="text" id="name-input" placeholder="你的名字" maxlength="12">
+      <div class="error-msg" id="name-error"></div>
+      <button class="btn btn-primary" id="btn-enter" style="margin-top:16px">进入游戏</button>
+      <button class="btn btn-secondary" id="btn-random-name" style="margin-top:8px">🎲 随机名字</button>
+      <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--muted)">
+        或按 Enter 键进入
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu Screen -->
+  <div id="screen-menu" class="screen hidden">
+    <div class="user-info">
+      <div>玩家</div>
+      <span id="menu-username">---</span>
+    </div>
+    <div class="title-block">
+      <div class="title-en">MAIN MENU</div>
+      <div class="title-main" style="font-size:clamp(24px,4vw,48px)">主菜单</div>
+      <div class="divider"></div>
+    </div>
+    <div class="menu-buttons">
+      <button class="menu-btn" id="btn-create">🏠 创建房间</button>
+      <button class="menu-btn" id="btn-join">🔗 加入房间</button>
+      <button class="menu-btn" id="btn-solo">🎮 单人模式</button>
+      <button class="menu-btn" id="btn-rules">📖 游戏规则</button>
+      <button class="menu-btn" id="btn-rename">🎲 换名字</button>
+    </div>
+  </div>
+
+  <!-- Level Select Screen -->
+  <div id="screen-levels" class="screen hidden">
+    <div class="title-block">
+      <div class="title-en">SELECT LEVEL</div>
+      <div class="title-main" style="font-size:clamp(24px,4vw,48px)">选择关卡</div>
+      <div class="title-sub">选择你要创建的关卡</div>
+      <div class="divider"></div>
+    </div>
+    <div class="level-grid" id="level-grid"></div>
+    <button class="btn btn-secondary" id="btn-level-back" style="margin-top:20px;width:auto;padding:10px 30px">返回</button>
+  </div>
+
+  <!-- Join Screen -->
+  <div id="screen-join" class="screen hidden">
+    <div class="title-block">
+      <div class="title-en">JOIN ROOM</div>
+      <div class="title-main" style="font-size:clamp(24px,4vw,48px)">加入房间</div>
+      <div class="divider"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">输入房间代码</div>
+      <input type="text" id="join-code" placeholder="如: ABC123" maxlength="6">
+      <div class="error-msg" id="join-error"></div>
+      <button class="btn btn-primary" id="btn-join-confirm" style="margin-top:16px">加入</button>
+      <button class="btn btn-secondary" id="btn-join-back">返回</button>
+      <button class="btn btn-secondary" id="btn-check-network" style="margin-top:12px">🔍 检测网络环境</button>
+      <div id="network-status" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+      <div style="margin-top:16px;padding:12px;background:rgba(243,156,18,0.1);border:1px solid rgba(243,156,18,0.3);font-size:12px;color:var(--muted);line-height:1.6">
+        <strong style="color:var(--gold)">💡 联机提示：</strong><br>
+        • <strong>同一WiFi</strong>：直接输入房间码加入<br>
+        • <strong>不同WiFi</strong>：已启用TURN中继，大部分情况可连通<br>
+        • 房间代码区分大小写<br>
+        • 如果连接失败，尝试刷新页面重试<br>
+        • 建议房主使用Chrome/Edge浏览器
+      </div>
+      <div style="margin-top:12px;padding:12px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);font-size:12px;color:var(--muted);line-height:1.6">
+        <strong style="color:var(--green-glow)">🌐 跨WiFi联机说明：</strong><br>
+        游戏已配置免费TURN中继服务器，支持大多数NAT类型穿透。如果仍无法连接，建议：<br>
+        1. 双方都点击「🔍 检测网络环境」查看支持情况<br>
+        2. 使用手机热点让所有玩家在同一网络<br>
+        3. 考虑使用第三方联机工具（如Parsec、Radmin VPN）
+      </div>
+    </div>
+  </div>
+
+  <!-- Room Screen -->
+  <div id="screen-room" class="screen hidden">
+    <div class="room-header">
+      <div class="room-code-label">ROOM CODE</div>
+      <div class="room-code" id="room-code-display" style="cursor:pointer" title="点击复制">---</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px" id="room-level-name">---</div>
+      <div style="font-size:11px;color:var(--green-glow);margin-top:4px;display:none" id="copy-hint">✓ 已复制到剪贴板</div>
+    </div>
+    <div class="user-info">
+      <div>玩家</div>
+      <span id="room-username">---</span>
+    </div>
+    <div style="margin-top:80px;text-align:center">
+      <div class="panel-title" style="margin-bottom:12px">玩家列表</div>
+      <div class="player-list" id="player-list"></div>
+      <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-primary" id="btn-ready" style="width:auto;padding:10px 30px">准备</button>
+        <button class="btn btn-secondary" id="btn-start" style="width:auto;padding:10px 30px;display:none">开始游戏</button>
+        <button class="btn btn-secondary" id="btn-add-ai" style="width:auto;padding:10px 20px;display:none">🤖 +AI</button>
+        <button class="btn btn-secondary" id="btn-remove-ai" style="width:auto;padding:10px 20px;display:none">🤖 -AI</button>
+        <button class="btn btn-secondary" id="btn-leave-room" style="width:auto;padding:10px 30px">离开</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:12px" id="room-hint">
+        等待所有玩家准备...
+      </div>
+    </div>
+    <div class="chat-box">
+      <div class="chat-messages" id="chat-messages"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="按Enter发送...">
+        <button id="btn-send">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Screen -->
+  <div id="screen-game" class="screen hidden">
+    <div class="game-info">
+      <div class="level-name" id="game-level-name">---</div>
+      <div class="game-status" id="game-status">等待开始...</div>
+    </div>
+    <!-- 玩家状态列表 -->
+    <div class="player-status-list" id="player-status-list" style="position:absolute;top:24px;left:24px;z-index:20;max-width:200px;"></div>
+    <div class="user-info">
+      <div>玩家</div>
+      <span id="game-username">---</span>
+    </div>
+    <div class="game-area" id="game-area">
+      <!-- Dynamic game content -->
+    </div>
+    <div class="chat-box" id="game-chat-box">
+      <div class="chat-messages" id="game-chat-messages"></div>
+      <div class="chat-input-row">
+        <input type="text" id="game-chat-input" placeholder="按Enter发送...">
+        <button id="btn-game-send">发送</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rules Screen -->
+  <div id="screen-rules" class="screen hidden">
+    <div class="title-block">
+      <div class="title-en">GAME RULES</div>
+      <div class="title-main" style="font-size:clamp(24px,4vw,48px)">游戏规则</div>
+      <div class="divider"></div>
+    </div>
+    <div class="panel" style="max-height:70vh;overflow-y:auto;width:min(600px,92vw);padding:32px">
+      <div id="rules-content"></div>
+    </div>
+    <button class="btn btn-secondary" id="btn-rules-back" style="margin-top:20px;width:auto;padding:10px 30px">返回</button>
+  </div>
+
+  <!-- Result Overlay -->
+  <div id="result-overlay" class="result-overlay hidden">
+    <div class="result-title" id="result-title">---</div>
+    <div class="result-desc" id="result-desc">---</div>
+    <button class="btn btn-primary" id="btn-result-ok" style="width:auto;padding:12px 40px">确定</button>
+  </div>
+
+</div>
+
+<script>
+// ==================== GAME CONFIG ====================
+const LEVELS = [
+  { id: 1, name: '高低牌', min: 2, max: 2, desc: '猜下一张牌比当前高还是低。A=14，猜错出局。' },
+  { id: 2, name: '猜数字', min: 2, max: 5, desc: '系统想一个1-100的数字，轮流猜。猜中者出局。' },
+  { id: 3, name: '俄罗斯轮盘', min: 2, max: 6, desc: '6槽1弹，轮流扣扳机。中弹出局。' },
+  { id: 4, name: '快速反应', min: 2, max: 10, desc: '屏幕变绿瞬间点击，最慢者出局。' },
+  { id: 5, name: '心理博弈', min: 2, max: 5, desc: '同时选数字，与目标差值大者出局。' },
+  { id: 6, name: '少数派', min: 3, max: 13, desc: '二选一，选少数派的一方存活。' },
+  { id: 7, name: '信任博弈', min: 2, max: 13, desc: '选合作或背叛，系统配对决定生死。' },
+  { id: 8, name: '沉默的羔羊', min: 2, max: 13, desc: '杀手暗中淘汰，白天投票处决。' },
+  { id: 9, name: '最后的晚餐', min: 2, max: 13, desc: '投票淘汰，得票最高和得0票者都出局。' },
+  { id: 10, name: '命运之轮', min: 2, max: 2, desc: '转盘决定命运：淘汰对手、自己淘汰、同归于尽...' }
+];
+
+const NAME_POOL = ['逃亡者','幸存者','赌徒','欺诈师','猎人','幽灵','影子','灰烬','乌鸦','毒蛇','孤狼','亡命徒','傀儡','小丑','死神','红桃A','黑桃K','方块Q','梅花J','鬼牌'];
+
+const SUITS = ['♠','♥','♣','♦'];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+// ==================== STATE ====================
+let myName = '';
+let myId = '';
+let myPeerId = '';
+let peer = null;
+let connections = {};
+let isHost = false;
+let roomCode = '';
+let currentLevel = null;
+let players = [];
+let gameState = null;
+let myReady = false;
+
+// ==================== UTILS ====================
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+function genRoomCode() { return Math.random().toString(36).substr(2, 6).toUpperCase(); }
+
+function genRandomName() {
+  const a = randChoice(NAME_POOL);
+  const b = randChoice(NAME_POOL);
+  const n = randInt(1000, 9999);
+  return a === b ? `${a}-${n}` : `${a}-${b}-${n}`;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function showResult(type, title, desc) {
+  const overlay = document.getElementById('result-overlay');
+  const t = document.getElementById('result-title');
+  const d = document.getElementById('result-desc');
+  t.className = 'result-title ' + type;
+  t.textContent = title;
+  d.textContent = desc;
+  overlay.classList.remove('hidden');
+}
+
+function hideResult() {
+  document.getElementById('result-overlay').classList.add('hidden');
+}
+
+function addChat(msg, isSystem) {
+  const box = document.getElementById(currentLevel ? 'game-chat-messages' : 'chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg';
+  if (isSystem) {
+    div.innerHTML = `<span class="msg-system">${msg}</span>`;
+  } else {
+    const name = msg.name || '???';
+    const text = msg.text || msg;
+    div.innerHTML = `<span class="msg-name">${name}:</span><span class="msg-text">${text}</span>`;
+  }
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ==================== NETWORK ====================
+// 免费TURN服务器配置（支持NAT穿透）
+const ICE_SERVERS = [
+  // Google STUN
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  // 免费TURN服务器（支持中继）
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+    username: 'openrelayproject',
+    credential: 'openrelayproject'
+  }
+];
+
+function initPeer() {
+  return new Promise((resolve, reject) => {
+    // 如果已有连接，先销毁
+    if (peer) {
+      peer.destroy();
+      peer = null;
+    }
+    
+    myPeerId = genId();
+    console.log('初始化PeerJS，ID:', myPeerId);
+    
+    peer = new Peer(myPeerId, {
+      host: 'peerjs.mirotalk.com',
+      port: 443,
+      secure: true,
+      config: {
+        iceServers: ICE_SERVERS,
+        iceCandidatePoolSize: 10
+      }
+    });
+    
+    const timeout = setTimeout(() => {
+      reject(new Error('连接超时，请检查网络'));
+    }, 15000);
+    
+    peer.on('open', (id) => {
+      clearTimeout(timeout);
+      console.log('PeerJS连接成功，ID:', id);
+      resolve();
+    });
+    
+    peer.on('error', err => {
+      clearTimeout(timeout);
+      console.error('PeerJS错误:', err);
+      reject(err);
+    });
+    
+    peer.on('connection', conn => {
+      console.log('收到连接请求:', conn.peer);
+      handleConnection(conn);
+    });
+  });
+}
+
+// 检测网络状态（包含TURN支持）
+function checkNetworkStatus() {
+  return new Promise((resolve) => {
+    const pc = new RTCPeerConnection({
+      iceServers: ICE_SERVERS,
+      iceCandidatePoolSize: 10
+    });
+    
+    let hasSTUN = false;
+    let hasTURN = false;
+    let hasRelay = false;
+    
+    pc.onicecandidate = (e) => {
+      if (e.candidate) {
+        const candidate = e.candidate.candidate;
+        if (candidate.includes('typ srflx')) hasSTUN = true;
+        if (candidate.includes('typ relay')) { hasTURN = true; hasRelay = true; }
+      }
+    };
+    
+    pc.onicegatheringstatechange = () => {
+      if (pc.iceGatheringState === 'complete') {
+        resolve({ 
+          connected: true, 
+          hasSTUN,
+          hasTURN,
+          hasRelay,
+          type: hasRelay ? '✓ 支持跨WiFi' : (hasSTUN ? '△ 仅部分NAT' : '✗ 仅局域网')
+        });
+        pc.close();
+      }
+    };
+    
+    pc.createDataChannel('test');
+    pc.createOffer().then(offer => pc.setLocalDescription(offer));
+    
+    setTimeout(() => {
+      resolve({ 
+        connected: true, 
+        hasSTUN,
+        hasTURN,
+        hasRelay,
+        type: hasRelay ? '✓ 支持跨WiFi' : (hasSTUN ? '△ 仅部分NAT' : '✗ 仅局域网'),
+        timeout: true
+      });
+      pc.close();
+    }, 8000);
+  });
+}
+
+function handleConnection(conn) {
+  console.log('处理连接:', conn.peer);
+  
+  conn.on('open', () => {
+    console.log('连接已打开:', conn.peer);
+    connections[conn.peer] = conn;
+    if (isHost) {
+      broadcast({ type: 'playerList', players: players });
+    }
+  });
+  
+  conn.on('data', data => {
+    console.log('收到数据:', data.type, '来自:', conn.peer);
+    handleMessage(data, conn.peer);
+  });
+  
+  conn.on('close', () => {
+    console.log('连接关闭:', conn.peer);
+    delete connections[conn.peer];
+    if (isHost) {
+      const leftPlayer = players.find(p => p.id === conn.peer);
+      
+      // 如果游戏进行中，给玩家30秒重连时间
+      if (gameState && leftPlayer) {
+        addChat({ text: `⚠️ ${leftPlayer.name} 断开连接，30秒内可重连...` }, true);
+        
+        // 30秒后检查是否重连
+        setTimeout(() => {
+          // 检查是否已重连
+          const reconnected = players.some(p => p.id === conn.peer);
+          if (!reconnected && gameState) {
+            // 未重连，标记为淘汰
+            const gamePlayer = gameState.players.find(p => p.id === conn.peer);
+            if (gamePlayer && gamePlayer.alive) {
+              gamePlayer.alive = false;
+              addChat({ text: `👻 ${leftPlayer.name} 未重连，被淘汰` }, true);
+              
+              // 检查是否只剩1人
+              const alive = gameState.players.filter(p => p.alive);
+              if (alive.length <= 1) {
+                endGame(alive[0]);
+                return;
+              }
+              
+              // 重新渲染游戏界面
+              broadcast({ type: 'gameState', state: gameState });
+              renderGame();
+            }
+          }
+        }, 30000);
+      } else {
+        // 非游戏进行中，直接移除
+        players = players.filter(p => p.id !== conn.peer);
+        broadcast({ type: 'playerList', players: players });
+        updatePlayerList();
+        if (leftPlayer) {
+          addChat({ text: `${leftPlayer.name} 离开了房间` }, true);
+        }
+      }
+    }
+  });
+  
+  conn.on('error', (err) => {
+    console.error('连接错误:', conn.peer, err);
+  });
+}
+
+function connectTo(peerId) {
+  return new Promise((resolve, reject) => {
+    console.log('尝试连接到:', peerId);
+    
+    // 检查是否已连接
+    if (connections[peerId] && connections[peerId].open) {
+      console.log('已连接到:', peerId);
+      resolve();
+      return;
+    }
+    
+    const conn = peer.connect(peerId, { 
+      reliable: true,
+      metadata: { name: myName }
+    });
+    
+    const timeout = setTimeout(() => {
+      reject(new Error('连接超时'));
+    }, 10000);
+    
+    conn.on('open', () => {
+      clearTimeout(timeout);
+      connections[peerId] = conn;
+      console.log('成功连接到:', peerId);
+      resolve();
+    });
+    
+    conn.on('error', (err) => {
+      clearTimeout(timeout);
+      console.error('连接错误:', err);
+      reject(err);
+    });
+    
+    conn.on('data', data => handleMessage(data, peerId));
+    
+    conn.on('close', () => {
+      console.log('连接关闭:', peerId);
+      delete connections[peerId];
+    });
+  });
+}
+
+function broadcast(data) {
+  Object.values(connections).forEach(conn => {
+    if (conn.open) conn.send(data);
+  });
+}
+
+function sendTo(peerId, data) {
+  if (connections[peerId] && connections[peerId].open) {
+    connections[peerId].send(data);
+  }
+}
+
+// ==================== MESSAGE HANDLER ====================
+function handleMessage(data, from) {
+  switch(data.type) {
+    case 'playerList':
+      players = data.players;
+      updatePlayerList();
+      break;
+    case 'chat':
+      addChat(data, false);
+      break;
+    case 'gameStart':
+      startGame(data.level);
+      break;
+    case 'gameState':
+      gameState = data.state;
+      renderGame();
+      break;
+    case 'gameAction':
+      handleGameAction(data.action, data.payload, from);
+      break;
+    case 'gameResult':
+      showResult(data.result, data.title, data.desc);
+      break;
+    case 'join':
+      // 房主处理新玩家加入
+      if (isHost && data.name && data.id) {
+        const newPlayer = { id: data.id, name: data.name, ready: false, host: false };
+        players.push(newPlayer);
+        broadcast({ type: 'playerList', players: players });
+        updatePlayerList();
+        addChat({ text: `${data.name} 加入了房间` }, true);
+      }
+      break;
+  }
+}
+
+// ==================== SCREENS ====================
+function initNameScreen() {
+  const input = document.getElementById('name-input');
+  // 每次进入都生成新名字，不保存到localStorage
+  input.value = genRandomName();
+
+  document.getElementById('btn-enter').onclick = enterGame;
+  document.getElementById('btn-random-name').onclick = () => {
+    input.value = genRandomName();
+  };
+  input.onkeydown = e => { if (e.key === 'Enter') enterGame(); };
+}
+
+function enterGame() {
+  const input = document.getElementById('name-input');
+  const name = input.value.trim();
+  if (!name) {
+    document.getElementById('name-error').textContent = '请输入名字';
+    return;
+  }
+  myName = name;
+  localStorage.setItem('lastgame_name', name);
+  myId = genId();
+  document.getElementById('menu-username').textContent = name;
+  showScreen('screen-menu');
+}
+
+function initMenu() {
+  document.getElementById('btn-create').onclick = () => showScreen('screen-levels');
+  document.getElementById('btn-join').onclick = () => showScreen('screen-join');
+  document.getElementById('btn-rules').onclick = showRules;
+  document.getElementById('btn-rename').onclick = () => {
+    showScreen('screen-name');
+    initNameScreen();
+  };
+  
+  // 单人模式：直接进入选关，自动添加AI
+  document.getElementById('btn-solo').onclick = () => {
+    showScreen('screen-levels');
+    // 标记为单人模式
+    window.isSoloMode = true;
+  };
+}
+
+function initLevelSelect() {
+  const grid = document.getElementById('level-grid');
+  grid.innerHTML = '';
+  LEVELS.forEach(lv => {
+    const card = document.createElement('div');
+    card.className = 'level-card';
+    card.innerHTML = `
+      <div class="lv-num">${lv.id}</div>
+      <div class="lv-name">${lv.name}</div>
+      <div class="lv-players">${lv.min}-${lv.max}人</div>
+      <div class="lv-desc">${lv.desc}</div>
+    `;
+    card.onclick = () => {
+      // 点击卡片时显示详细规则
+      showLevelDetail(lv);
+    };
+    grid.appendChild(card);
+  });
+  document.getElementById('btn-level-back').onclick = () => showScreen('screen-menu');
+}
+
+// 显示关卡详情（包含详细规则）
+function showLevelDetail(lv) {
+  const detailHTML = getLevelRules(lv.id);
+  
+  // 创建临时弹窗
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(5,5,8,0.95); z-index: 200;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px;
+  `;
+  
+  overlay.innerHTML = `
+    <div style="max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--border); padding: 30px;">
+      <div style="font-size: 32px; font-weight: bold; color: var(--red-glow); margin-bottom: 8px;">${lv.id}. ${lv.name}</div>
+      <div style="font-size: 14px; color: var(--muted); margin-bottom: 20px;">${lv.min}-${lv.max}人 | ${lv.desc}</div>
+      <div style="font-size: 16px; line-height: 1.8; color: var(--text);">${detailHTML}</div>
+      <div style="margin-top: 30px; display: flex; gap: 12px; justify-content: center;">
+        <button class="btn btn-primary" id="btn-start-level" style="width: auto; padding: 12px 40px;">开始此关卡</button>
+        <button class="btn btn-secondary" id="btn-close-detail" style="width: auto; padding: 12px 40px;">返回</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(overlay);
+  
+  document.getElementById('btn-start-level').onclick = () => {
+    document.body.removeChild(overlay);
+    createRoom(lv);
+  };
+  
+  document.getElementById('btn-close-detail').onclick = () => {
+    document.body.removeChild(overlay);
+  };
+}
+
+function initJoinScreen() {
+  document.getElementById('btn-join-confirm').onclick = joinRoom;
+  document.getElementById('btn-join-back').onclick = () => showScreen('screen-menu');
+  document.getElementById('join-code').onkeydown = e => {
+    if (e.key === 'Enter') joinRoom();
+  };
+  
+  // 网络检测按钮
+  document.getElementById('btn-check-network').onclick = async () => {
+    const statusDiv = document.getElementById('network-status');
+    statusDiv.innerHTML = '<span style="color:var(--muted)">检测中（约5-8秒）...</span>';
+    
+    try {
+      const result = await checkNetworkStatus();
+      let html = `<span style="color:${result.hasRelay ? 'var(--green-glow)' : (result.hasSTUN ? 'var(--gold)' : 'var(--red-glow)')}">${result.type}</span>`;
+      
+      if (result.hasRelay) {
+        html += '<br><span style="color:var(--green-glow)">✓ 支持跨WiFi联机</span>';
+      } else if (result.hasSTUN) {
+        html += '<br><span style="color:var(--gold)">△ 部分NAT支持，建议同一WiFi</span>';
+      } else {
+        html += '<br><span style="color:var(--red-glow)">✗ 仅支持局域网</span>';
+      }
+      
+      statusDiv.innerHTML = html;
+    } catch (err) {
+      statusDiv.innerHTML = `<span style="color:var(--red-glow)">✗ 检测失败 - ${err.message}</span>`;
+    }
+  };
+}
+
+function initRoomScreen() {
+  document.getElementById('btn-ready').onclick = toggleReady;
+  document.getElementById('btn-start').onclick = hostStartGame;
+  document.getElementById('btn-leave-room').onclick = leaveRoom;
+  document.getElementById('btn-send').onclick = sendChat;
+  document.getElementById('chat-input').onkeydown = e => {
+    if (e.key === 'Enter') sendChat();
+  };
+  
+  // AI控制按钮（仅单人模式显示）
+  document.getElementById('btn-add-ai').onclick = () => {
+    if (!currentLevel) return;
+    const aiCount = players.filter(p => p.isAI).length;
+    const maxAI = currentLevel.max - 1; // 保留1个位置给玩家
+    
+    if (aiCount >= maxAI) {
+      addChat({ text: `最多${maxAI}个AI` }, true);
+      return;
+    }
+    
+    const aiId = 'ai-' + genId();
+    const aiName = 'AI-' + randChoice(NAME_POOL);
+    players.push({ id: aiId, name: aiName, ready: true, host: false, isAI: true });
+    updatePlayerList();
+    addChat({ text: `添加AI: ${aiName}` }, true);
+  };
+  
+  document.getElementById('btn-remove-ai').onclick = () => {
+    const aiPlayers = players.filter(p => p.isAI);
+    if (aiPlayers.length === 0) {
+      addChat({ text: '没有AI可移除' }, true);
+      return;
+    }
+    
+    // 移除最后一个AI
+    const lastAI = aiPlayers[aiPlayers.length - 1];
+    players = players.filter(p => p.id !== lastAI.id);
+    updatePlayerList();
+    addChat({ text: `移除AI: ${lastAI.name}` }, true);
+  };
+  
+  // 点击房间码复制到剪贴板
+  document.getElementById('room-code-display').onclick = () => {
+    const code = document.getElementById('room-code-display').textContent;
+    if (code && code !== '---' && code !== '单人模式') {
+      navigator.clipboard.writeText(code).then(() => {
+        const hint = document.getElementById('copy-hint');
+        hint.style.display = 'block';
+        setTimeout(() => { hint.style.display = 'none'; }, 2000);
+      }).catch(() => {
+        // 降级方案
+        const input = document.createElement('input');
+        input.value = code;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        const hint = document.getElementById('copy-hint');
+        hint.style.display = 'block';
+        setTimeout(() => { hint.style.display = 'none'; }, 2000);
+      });
+    }
+  };
+}
+
+function initGameScreen() {
+  document.getElementById('btn-game-send').onclick = sendGameChat;
+  document.getElementById('game-chat-input').onkeydown = e => {
+    if (e.key === 'Enter') sendGameChat();
+  };
+  document.getElementById('btn-result-ok').onclick = () => {
+    hideResult();
+    if (isHost) {
+      showScreen('screen-room');
+    } else {
+      showScreen('screen-menu');
+      leaveRoom();
+    }
+  };
+}
+
+function showRules() {
+  const content = document.getElementById('rules-content');
+  content.innerHTML = LEVELS.map(lv => `
+    <div style="margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--border)">
+      <div style="color:var(--red-glow);font-size:22px;margin-bottom:12px;font-weight:bold">
+        第${lv.id}关 · ${lv.name} · ${lv.min}-${lv.max}人
+      </div>
+      <div style="color:var(--text);font-size:18px;line-height:1.8">${getLevelRules(lv.id)}</div>
+    </div>
+  `).join('') + `
+    <div style="color:var(--gold);font-size:18px;margin-top:16px;line-height:1.8">
+      <strong>通用规则：</strong><br>
+      • 每关淘汰失败玩家<br>
+      • 最后存活1人即为胜利<br>
+      • 同归于尽则全部失败
+    </div>
+  `;
+  document.getElementById('btn-rules-back').onclick = () => showScreen('screen-menu');
+  showScreen('screen-rules');
+}
+
+// 获取关卡详细规则
+function getLevelRules(levelId) {
+  const rules = {
+    1: `
+      <strong>游戏流程：</strong><br>
+      1. 系统发一张牌给你<br>
+      2. 你猜测下一张牌比当前牌大还是小<br>
+      3. A=14, K=13, Q=12, J=11<br>
+      4. 猜错即被淘汰<br>
+      <br>
+      <strong>策略提示：</strong><br>
+      • 拿到小牌（2-7）猜"高"更安全<br>
+      • 拿到大牌（9-A）猜"低"更安全<br>
+      • 拿到8时风险最大，需要运气
+    `,
+    2: `
+      <strong>游戏流程：</strong><br>
+      1. 系统随机想一个1-100的数字<br>
+      2. 玩家轮流猜测<br>
+      3. 系统提示"太大"或"太小"<br>
+      4. 猜中数字的玩家出局<br>
+      <br>
+      <strong>策略提示：</strong><br>
+      • 使用二分法策略<br>
+      • 先猜50，根据提示调整范围<br>
+      • 注意其他玩家的猜测范围
+    `,
+    3: `
+      <strong>游戏流程：</strong><br>
+      1. 6个弹槽，1颗子弹<br>
+      2. 玩家轮流扣动扳机<br>
+      3. 中弹者出局<br>
+      4. 存活到最后获胜<br>
+      <br>
+      <strong>策略提示：</strong><br>
+      • 纯运气游戏，无策略<br>
+      • 每次扣扳机有1/6概率中弹<br>
+      • 越到后面越危险
+    `,
+    4: `
+      <strong>游戏流程：</strong><br>
+      1. 屏幕显示红色"等待..."<br>
+      2. 随机时间后变绿色"点击！"<br>
+      3. 变绿瞬间点击屏幕<br>
+      4. 反应最慢的玩家出局<br>
+      <br>
+      <strong>策略提示：</strong><br>
+      • 保持注意力集中<br>
+      • 预判变绿时机<br>
+      • 不要提前点击（会判负）
+    `,
+    5: `
+      <strong>游戏流程：</strong><br>
+      1. 每位玩家同时选择一个数字（1-100）<br>
+      2. 计算所有数字的平均值<br>
+      3. 目标值 = 平均值 × 0.8<br>
+      4. 最接近目标值的玩家获胜<br>
+      5. 偏离最远的玩家出局<br>
+      <br>
+      <strong>策略提示：</strong><br>
+      • 预期其他玩家会选中间值<br>
+      • 选择比中间值略小的数字<br>
+      • 观察其他玩家的习惯
+    `,
+    6: `
+      <strong>游戏流程：</strong><br>
+      1. 系统给出两个选项（如：红/蓝）<br>
+      2. 玩家同时选择一个选项<br>
+      3. 选择人数较少的一方存活<br>
+      4. 选择人数较多的一方全部出局<br>
+      <br>
+      <strong>策略提示：</strong><br>
+      • 逆向思维，选择看似冷门的选项<br>
+      • 观察历史趋势<br>
+      • 心理博弈，预判他人选择
+    `,
+    7: `
+      <strong>游戏流程：</strong><br>
+      1. 玩家两两配对<br>
+      2. 每对同时选择"合作"或"背叛"<br>
+      3. 都选合作：都存活<br>
+      4. 都选背叛：都出局<br>
+      5. 一方合作一方背叛：背叛者存活，合作者出局<br>
+      <br>
+      <strong>策略提示：</strong><br>
+      • 信任对方可能双赢<br>
+      • 但背叛更保险<br>
+      • 观察对方历史行为
+    `,
+    8: `
+      <strong>游戏流程：</strong><br>
+      1. 随机分配角色：杀手/平民<br>
+      2. 夜晚：杀手选择淘汰目标<br>
+      3. 白天：所有玩家投票处决嫌疑人<br>
+      4. 得票最高者出局<br>
+      5. 杀手全灭或平民全灭时游戏结束<br>
+      <br>
+      <strong>策略提示：</strong><br>
+      • 杀手：隐藏身份，嫁祸他人<br>
+      • 平民：观察行为，找出杀手<br>
+      • 注意发言逻辑矛盾
+    `,
+    9: `
+      <strong>游戏流程：</strong><br>
+      1. 玩家轮流投票淘汰他人<br>
+      2. 得票最高者出局<br>
+      3. <strong>4人及以上时，得0票者也出局</strong>（没人支持）<br>
+      4. 最后存活1人获胜<br>
+      <br>
+      <strong>策略提示：</strong><br>
+      • 平衡策略：不要太高调也不要太低调<br>
+      • 结盟投票但避免成为目标<br>
+      • 注意"得0票也出局"规则（4人及以上生效）
+    `,
+    10: `
+      <strong>游戏流程：</strong><br>
+      1. 转盘上有多个区域<br>
+      2. 玩家轮流转动转盘<br>
+      3. 指针指向的区域决定结果<br>
+      4. 可能结果：淘汰对手、自己淘汰、同归于尽、安全<br>
+      <br>
+      <strong>策略提示：</strong><br>
+      • 纯运气游戏<br>
+      • 希望转到"淘汰对手"<br>
+      • 避免"同归于尽"
+    `
+  };
+  
+  return rules[levelId] || '暂无详细规则';
+}
+
+// ==================== ROOM ====================
+async function createRoom(level) {
+  currentLevel = level;
+  isHost = true;
+  roomCode = genRoomCode();
+  myPeerId = genId(); // 确保有ID
+  players = [{ id: myPeerId, name: myName, ready: false, host: true }];
+
+  // 单人模式直接跳过P2P
+  if (window.isSoloMode) {
+    document.getElementById('room-code-display').textContent = '单人模式';
+    document.getElementById('room-level-name').textContent = `${level.id}. ${level.name} (${level.min}-${level.max}人)`;
+    document.getElementById('room-username').textContent = myName;
+    document.getElementById('btn-start').style.display = 'inline-block';
+    document.getElementById('btn-ready').style.display = 'none';
+    
+    // 显示AI控制按钮
+    document.getElementById('btn-add-ai').style.display = 'inline-block';
+    document.getElementById('btn-remove-ai').style.display = 'inline-block';
+
+    updatePlayerList();
+    showScreen('screen-room');
+    addChat({ text: '单人模式已启动' }, true);
+    addChat({ text: `本关卡需要 ${level.min}-${level.max} 人` }, true);
+    addChat({ text: '点击"+AI"添加AI玩家' }, true);
+    addChat({ text: `至少需要添加 ${Math.max(0, level.min - 1)} 个AI才能开始` }, true);
+    return;
+  }
+
+  try {
+    await initPeer();
+  } catch (err) {
+    console.warn('P2P初始化失败，使用本地模式:', err);
+    // 本地模式，不阻塞
+  }
+
+  document.getElementById('room-code-display').textContent = roomCode;
+  document.getElementById('room-level-name').textContent = `${level.id}. ${level.name} (${level.min}-${level.max}人)`;
+  document.getElementById('room-username').textContent = myName;
+  document.getElementById('btn-start').style.display = 'inline-block';
+  document.getElementById('btn-ready').style.display = 'none';
+  
+  // 隐藏AI控制按钮
+  document.getElementById('btn-add-ai').style.display = 'none';
+  document.getElementById('btn-remove-ai').style.display = 'none';
+
+  updatePlayerList();
+  showScreen('screen-room');
+  addChat({ text: `房间已创建！代码: ${roomCode}` }, true);
+  addChat({ text: '点击房间码可复制，分享给好友' }, true);
+  addChat({ text: '单人测试时直接点击"开始游戏"' }, true);
+}
+
+async function joinRoom() {
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if (!code) {
+    document.getElementById('join-error').textContent = '请输入房间代码';
+    return;
+  }
+
+  if (code.length !== 6) {
+    document.getElementById('join-error').textContent = '房间代码应为6位';
+    return;
+  }
+
+  isHost = false;
+  roomCode = code;
+
+  try {
+    document.getElementById('join-error').textContent = '正在连接...';
+    
+    await initPeer();
+    
+    // 等待PeerJS连接建立
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('PeerJS连接超时')), 10000);
+      
+      const onOpen = () => {
+        clearTimeout(timeout);
+        peer.off('open', onOpen);
+        peer.off('error', onError);
+        resolve();
+      };
+      
+      const onError = (err) => {
+        clearTimeout(timeout);
+        peer.off('open', onOpen);
+        peer.off('error', onError);
+        reject(err);
+      };
+      
+      peer.on('open', onOpen);
+      peer.on('error', onError);
+    });
+    
+    console.log('PeerJS已连接，正在连接到房主:', code);
+    
+    // 连接到房主
+    await connectTo(code);
+    
+    // 发送加入请求
+    console.log('发送加入请求');
+    sendTo(code, { type: 'join', name: myName, id: myPeerId });
+
+    document.getElementById('room-code-display').textContent = code;
+    document.getElementById('room-username').textContent = myName;
+    document.getElementById('btn-start').style.display = 'none';
+    document.getElementById('btn-ready').style.display = 'inline-block';
+
+    showScreen('screen-room');
+    addChat({ text: `已加入房间 ${code}` }, true);
+  } catch (err) {
+    console.error('加入房间失败:', err);
+    document.getElementById('join-error').textContent = '无法连接到房间: ' + err.message;
+  }
+}
+
+function toggleReady() {
+  myReady = !myReady;
+  const btn = document.getElementById('btn-ready');
+  btn.textContent = myReady ? '取消准备' : '准备';
+  btn.className = myReady ? 'btn btn-secondary' : 'btn btn-primary';
+
+  if (isHost) {
+    const me = players.find(p => p.id === myPeerId);
+    if (me) me.ready = myReady;
+    broadcast({ type: 'playerList', players: players });
+    updatePlayerList();
+  } else {
+    sendTo(roomCode, { type: 'ready', id: myPeerId, ready: myReady });
+  }
+}
+
+function hostStartGame() {
+  // 单人模式：自动添加AI并全部准备
+  if (window.isSoloMode) {
+    addChat({ text: '单人模式：准备AI玩家...' }, true);
+    
+    // 单人模式：尊重用户手动添加的AI数量，不再强制追加
+    // 如果没有添加任何AI，自动添加至少1个AI
+    const aiCount = players.filter(p => p.isAI).length;
+    if (aiCount === 0) {
+      const aiId = 'ai-' + genId();
+      const aiName = 'AI-' + randChoice(NAME_POOL);
+      players.push({ id: aiId, name: aiName, ready: true, host: false, isAI: true });
+      addChat({ text: `自动添加AI: ${aiName}` }, true);
+    }
+    
+    // 确保所有AI都准备好
+    players.forEach(p => {
+      if (p.isAI) p.ready = true;
+    });
+    
+    updatePlayerList();
+    broadcast({ type: 'playerList', players: players });
+    
+    // 直接开始游戏
+    broadcast({ type: 'gameStart', level: currentLevel });
+    startGame(currentLevel);
+    return;
+  }
+  
+  const readyPlayers = players.filter(p => p.ready || p.host);
+  
+  // 多人模式：检查人数
+  if (readyPlayers.length < currentLevel.min) {
+    addChat({ text: `需要至少${currentLevel.min}名玩家准备（当前${readyPlayers.length}人）` }, true);
+    return;
+  }
+  
+  broadcast({ type: 'gameStart', level: currentLevel });
+  startGame(currentLevel);
+}
+
+function leaveRoom() {
+  Object.values(connections).forEach(c => c.close());
+  connections = {};
+  if (peer) peer.destroy();
+  peer = null;
+  players = [];
+  currentLevel = null;
+  isHost = false;
+  myReady = false;
+  showScreen('screen-menu');
+}
+
+function updatePlayerList() {
+  const list = document.getElementById('player-list');
+  list.innerHTML = players.map(p => `
+    <div class="player-item">
+      <span class="p-name">${p.name}${p.isAI ? '(AI)' : ''}</span>
+      <span class="p-status ${p.host ? 'host' : (p.ready ? 'ready' : '')}">
+        ${p.host ? '房主' : (p.isAI ? 'AI' : (p.ready ? '已准备' : '未准备'))}
+      </span>
+    </div>
+  `).join('');
+
+  const readyCount = players.filter(p => p.ready || p.host).length;
+  const aiCount = players.filter(p => p.isAI).length;
+  const minText = currentLevel ? `需要${currentLevel.min}人` : '需要?人';
+  const aiText = aiCount > 0 ? ` · ${aiCount}个AI` : '';
+  document.getElementById('room-hint').textContent =
+    `${readyCount}/${players.length} 已准备 · ${minText}${aiText}`;
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addChat({ name: myName, text: text }, false);
+  if (isHost) {
+    broadcast({ type: 'chat', name: myName, text: text });
+  } else {
+    sendTo(roomCode, { type: 'chat', name: myName, text: text });
+  }
+}
+
+function sendGameChat() {
+  const input = document.getElementById('game-chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addChat({ name: myName, text: text }, false);
+  broadcast({ type: 'chat', name: myName, text: text });
+}
+
+// ==================== GAME ENGINE ====================
+function startGame(level) {
+  currentLevel = level;
+  document.getElementById('game-level-name').textContent = `${level.id}. ${level.name}`;
+  document.getElementById('game-username').textContent = myName;
+  showScreen('screen-game');
+
+  gameState = {
+    level: level.id,
+    players: players.map(p => ({ ...p, alive: true })),
+    turn: 0,
+    phase: 'intro',
+    data: {}
+  };
+
+  // 更新玩家状态列表
+  updatePlayerStatusList();
+
+  setTimeout(() => {
+    gameState.phase = 'playing';
+    initLevel(level.id);
+  }, 2000);
+}
+
+// 更新左上角玩家状态列表
+function updatePlayerStatusList() {
+  const container = document.getElementById('player-status-list');
+  if (!container || !gameState) return;
+  
+  container.innerHTML = gameState.players.map(p => {
+    let statusLabel = '';
+    
+    if (!p.alive) {
+      statusLabel = '<span class="status-label">已淘汰</span>';
+    } else {
+      // 根据当前关卡显示"已确定"状态
+      const level = gameState.level;
+      const data = gameState.data;
+      
+      if (level === 1 && data.currentPlayer === p.id) {
+        statusLabel = '<span class="status-label" style="background:var(--gold)">当前</span>';
+      } else if (level === 2 && data.history && data.history.some(h => h.name === p.name)) {
+        statusLabel = '<span class="status-label" style="background:var(--green)">已猜</span>';
+      } else if (level === 3 && data.currentPlayer === p.id) {
+        statusLabel = '<span class="status-label" style="background:var(--gold)">当前</span>';
+      } else if (level === 4 && data.reactionResults && data.reactionResults[p.id] !== undefined) {
+        statusLabel = '<span class="status-label" style="background:var(--green)">已点击</span>';
+      } else if (level === 5 && data.mindResults && data.mindResults[p.id] !== undefined) {
+        statusLabel = '<span class="status-label" style="background:var(--green)">已确定</span>';
+      } else if (level === 6 && data.minorityVotes && data.minorityVotes[p.id]) {
+        statusLabel = '<span class="status-label" style="background:var(--green)">已确定</span>';
+      } else if (level === 7 && data.trustChoices && data.trustChoices[p.id]) {
+        statusLabel = '<span class="status-label" style="background:var(--green)">已确定</span>';
+      } else if (level === 8 && data.mafiaVotes && data.mafiaVotes[p.id]) {
+        statusLabel = '<span class="status-label" style="background:var(--green)">已投票</span>';
+      } else if (level === 9 && data.dinnerVotes && data.dinnerVotes[p.id]) {
+        statusLabel = '<span class="status-label" style="background:var(--green)">已投票</span>';
+      } else if (level === 10 && data.currentPlayer === p.id) {
+        statusLabel = '<span class="status-label" style="background:var(--gold)">当前</span>';
+      }
+    }
+    
+    return `
+    <div class="player-status-item">
+      <div class="status-dot ${p.alive ? '' : 'eliminated'}"></div>
+      <span class="status-name ${p.alive ? '' : 'eliminated'}">${p.name}${p.isAI ? '(AI)' : ''}</span>
+      ${statusLabel}
+    </div>
+  `}).join('');
+}
+
+function initLevel(levelId) {
+  const area = document.getElementById('game-area');
+  area.innerHTML = '';
+
+  switch(levelId) {
+    case 1: initHighLow(area); break;
+    case 2: initGuessNumber(area); break;
+    case 3: initRoulette(area); break;
+    case 4: initReaction(area); break;
+    case 5: initMindGame(area); break;
+    case 6: initMinority(area); break;
+    case 7: initTrust(area); break;
+    case 8: initMafia(area); break;
+    case 9: initDinner(area); break;
+    case 10: initWheel(area); break;
+  }
+  
+  // 触发AI行动 - 逐个触发
+  setTimeout(() => processAITurn(), 300);
+}
+
+// AI玩家智能决策逻辑
+function processAITurn() {
+  if (!gameState) return;
+  
+  const alive = gameState.players.filter(p => p.alive);
+  const current = alive[gameState.turn % alive.length];
+  
+  if (!current) return;
+  
+  // 如果不是AI，检查是否已经行动过了（同时行动关卡）
+  if (!current.isAI) {
+    const level = gameState.level;
+    const data = gameState.data;
+    let alreadyActed = false;
+    
+    if (level === 5 && data.mindResults && data.mindResults[current.id] !== undefined) alreadyActed = true;
+    else if (level === 6 && data.minorityVotes && data.minorityVotes[current.id]) alreadyActed = true;
+    else if (level === 7 && data.trustChoices && data.trustChoices[current.id]) alreadyActed = true;
+    else if (level === 8 && data.mafiaPhase === 'day' && data.mafiaVotes && data.mafiaVotes[current.id]) alreadyActed = true;
+    else if (level === 9 && data.dinnerVotes && data.dinnerVotes[current.id]) alreadyActed = true;
+    
+    if (alreadyActed) {
+      console.log('人类玩家已行动，继续下一个:', current.name);
+      gameState.turn++;
+      setTimeout(() => processAITurn(), 100);
+      return;
+    }
+    
+    // 对于同时行动关卡，跳过未行动的人类玩家，继续触发后续AI
+    if (level >= 5 && level <= 9) {
+      console.log('人类玩家未行动，跳过继续触发AI:', current.name);
+      gameState.turn++;
+      setTimeout(() => processAITurn(), 100);
+      return;
+    }
+    
+    console.log('等待人类玩家:', current.name);
+    return;
+  }
+  
+  // 检查当前AI是否已经行动过了（避免重复行动）
+  if (gameState.level === 5 && gameState.data.mindResults && gameState.data.mindResults[current.id] !== undefined) {
+    console.log('AI已行动，跳过:', current.name);
+    gameState.turn++;
+    setTimeout(() => processAITurn(), 100);
+    return;
+  }
+  if (gameState.level === 6 && gameState.data.minorityVotes && gameState.data.minorityVotes[current.id]) {
+    console.log('AI已行动，跳过:', current.name);
+    gameState.turn++;
+    setTimeout(() => processAITurn(), 100);
+    return;
+  }
+  if (gameState.level === 7 && gameState.data.trustChoices && gameState.data.trustChoices[current.id]) {
+    console.log('AI已行动，跳过:', current.name);
+    gameState.turn++;
+    setTimeout(() => processAITurn(), 100);
+    return;
+  }
+  if (gameState.level === 8 && gameState.data.mafiaVotes && gameState.data.mafiaVotes[current.id]) {
+    console.log('AI已行动，跳过:', current.name);
+    gameState.turn++;
+    setTimeout(() => processAITurn(), 100);
+    return;
+  }
+  if (gameState.level === 9 && gameState.data.dinnerVotes && gameState.data.dinnerVotes[current.id]) {
+    console.log('AI已行动，跳过:', current.name);
+    gameState.turn++;
+    setTimeout(() => processAITurn(), 100);
+    return;
+  }
+  
+  console.log('AI决策:', current.name, '关卡:', gameState.level);
+  
+  // 根据关卡类型执行AI行动（带随机延迟，模拟真人思考）
+  const thinkTime = randInt(500, 1500);
+  
+  setTimeout(() => {
+    switch(gameState.level) {
+      case 1: // 高低牌 - 智能猜测
+        if (gameState.data.currentCard) {
+          const card = gameState.data.currentCard;
+          const cardValue = card.value;
+          // 智能策略：中间值随机，极端值偏向另一边
+          let guess;
+          if (cardValue <= 3) guess = 'high'; // 小牌猜高
+          else if (cardValue >= 11) guess = 'low'; // 大牌猜低
+          else guess = Math.random() > 0.5 ? 'high' : 'low'; // 中间随机
+          
+          // 添加一些随机性，不是100%正确
+          if (Math.random() < 0.15) guess = guess === 'high' ? 'low' : 'high';
+          
+          console.log('AI高低牌决策:', current.name, '牌:', card.rank, '猜:', guess);
+          guessHighLow(guess);
+        }
+        break;
+        
+      case 2: // 猜数字 - 智能二分
+        if (gameState.data.min !== undefined) {
+          const min = gameState.data.min;
+          const max = gameState.data.max;
+          // 智能策略：二分法，但添加随机偏移
+          const mid = Math.floor((min + max) / 2);
+          const offset = randInt(-5, 5);
+          const guess = Math.max(min, Math.min(max, mid + offset));
+          
+          console.log('AI猜数字决策:', current.name, '范围:', min, '-', max, '猜:', guess);
+          doGuess(guess.toString());
+        }
+        break;
+        
+      case 3: // 轮盘 - 直接扣（无策略，纯运气）
+        console.log('AI轮盘决策:', current.name, '扣扳机');
+        doFire();
+        break;
+        
+      case 4: // 反应测试 - 模拟人类反应时间
+        // AI等待绿色出现后点击
+        const aiReactionDelay = randInt(200, 600); // 人类反应时间200-600ms
+        
+        // 如果已经变绿了，直接点击
+        if (gameState.data.reactionGo && !gameState.data.reactionResults[current.id]) {
+          const time = Date.now() - gameState.data.reactionGo + aiReactionDelay;
+          gameState.data.reactionResults[current.id] = time;
+          broadcast({ type: 'gameAction', action: 'reaction', payload: { id: current.id, time } });
+          console.log('AI反应测试:', current.name, '时间:', time, 'ms');
+          checkReactionEnd();
+        } else if (!gameState.data.reactionResults[current.id]) {
+          // 还没变绿，等待变绿后再点击（避免点太早）
+          const waitForGreen = setInterval(() => {
+            if (gameState.data.reactionGo && !gameState.data.reactionResults[current.id]) {
+              clearInterval(waitForGreen);
+              const time = Date.now() - gameState.data.reactionGo + aiReactionDelay;
+              gameState.data.reactionResults[current.id] = time;
+              broadcast({ type: 'gameAction', action: 'reaction', payload: { id: current.id, time } });
+              console.log('AI反应测试:', current.name, '时间:', time, 'ms');
+              checkReactionEnd();
+            }
+          }, 50);
+          
+          // 5秒后如果还没变绿，清除interval
+          setTimeout(() => clearInterval(waitForGreen), 5000);
+        }
+        break;
+        
+      case 5: // 心理游戏 - 智能猜测
+        // 策略：偏向中间值，但添加随机性
+        const mindStrategies = [
+          randInt(40, 60), // 偏向中间
+          randInt(1, 100), // 完全随机
+          randInt(30, 70)  // 较宽范围
+        ];
+        const mindVal = mindStrategies[randInt(0, 2)];
+        
+        // 确保mindResults对象存在
+        if (!gameState.data.mindResults) gameState.data.mindResults = {};
+        gameState.data.mindResults[current.id] = mindVal;
+        
+        // 更新UI显示AI已选择
+        const mindStatus = document.getElementById('mind-status');
+        if (mindStatus) {
+          const alivePlayers = gameState.players.filter(p => p.alive);
+          const done = alivePlayers.filter(p => gameState.data.mindResults[p.id] !== undefined).length;
+          mindStatus.textContent = `${done}/${alivePlayers.length} 已选择`;
+        }
+        
+        // AI选择不显示具体数字，只显示"已确定"
+        const mindConfirmed = document.getElementById('mind-confirmed');
+        const mindConfirmedVal = document.getElementById('mind-confirmed-val');
+        if (mindConfirmed && mindConfirmedVal) {
+          mindConfirmed.style.display = 'block';
+          mindConfirmedVal.textContent = '***';
+        }
+        
+        broadcast({ type: 'gameAction', action: 'mind', payload: { id: current.id, value: mindVal } });
+        console.log('AI心理游戏:', current.name, '选择:', mindVal);
+        
+        // 检查是否所有人都已选择
+        const mindAlive = gameState.players.filter(p => p.alive);
+        const mindDone = mindAlive.filter(p => gameState.data.mindResults[p.id] !== undefined).length;
+        
+        if (mindDone >= mindAlive.length) {
+          // 所有人都选择了，结算
+          checkMindEnd();
+        } else {
+          // 还有人没选择，推进到下一个AI
+          gameState.turn++;
+          setTimeout(() => processAITurn(), 500);
+        }
+        break;
+        
+      case 6: // 少数派 - 观察趋势
+        // 策略：如果之前轮次有数据，尝试选择少数派
+        let minorityChoice;
+        if (gameState.data.minorityHistory && gameState.data.minorityHistory.length > 0) {
+          const lastRound = gameState.data.minorityHistory[gameState.data.minorityHistory.length - 1];
+          if (lastRound && Math.random() < 0.6) {
+            // 60%概率选择上一轮少数派
+            minorityChoice = lastRound.minority;
+          } else {
+            minorityChoice = Math.random() > 0.5 ? 'a' : 'b';
+          }
+        } else {
+          minorityChoice = Math.random() > 0.5 ? 'a' : 'b';
+        }
+        
+        // 确保minorityVotes对象存在
+        if (!gameState.data.minorityVotes) gameState.data.minorityVotes = {};
+        gameState.data.minorityVotes[current.id] = minorityChoice;
+        
+        // 更新UI显示AI已选择
+        const minorityStatus = document.getElementById('minority-status');
+        if (minorityStatus) {
+          const alivePlayers = gameState.players.filter(p => p.alive);
+          const done = alivePlayers.filter(p => gameState.data.minorityVotes[p.id]).length;
+          minorityStatus.textContent = `${done}/${alivePlayers.length} 已选择`;
+        }
+        
+        // AI选择不显示具体选项，只显示"已确定"
+        const minorityConfirmed = document.getElementById('minority-confirmed');
+        const minorityConfirmedVal = document.getElementById('minority-confirmed-val');
+        if (minorityConfirmed && minorityConfirmedVal) {
+          minorityConfirmed.style.display = 'block';
+          minorityConfirmedVal.textContent = '***';
+        }
+        
+        broadcast({ type: 'gameAction', action: 'minority', payload: { id: current.id, choice: minorityChoice } });
+        console.log('AI少数派:', current.name, '选择:', minorityChoice);
+        
+        // 检查是否所有人都已投票
+        const minorityAlive = gameState.players.filter(p => p.alive);
+        const minorityDone = minorityAlive.filter(p => gameState.data.minorityVotes[p.id]).length;
+        
+        if (minorityDone >= minorityAlive.length) {
+          // 所有人都投票了，结算
+          checkMinorityEnd();
+        } else {
+          // 还有人没投票，推进到下一个AI
+          gameState.turn++;
+          setTimeout(() => processAITurn(), 500);
+        }
+        break;
+        
+      case 7: // 信任博弈 - 智能策略
+        // 策略：70%合作，但轮空者下轮必须背叛（增加策略性）
+        let trustChoice;
+        if (gameState.data.trustByePlayer === current.id) {
+          trustChoice = 'betray'; // 轮空者下轮强制背叛
+        } else {
+          trustChoice = Math.random() > 0.3 ? 'cooperate' : 'betray';
+        }
+        
+        // 确保trustChoices对象存在
+        if (!gameState.data.trustChoices) gameState.data.trustChoices = {};
+        gameState.data.trustChoices[current.id] = trustChoice;
+        
+        // 更新UI显示AI已选择
+        const trustStatus = document.getElementById('trust-status');
+        if (trustStatus) {
+          const alivePlayers = gameState.players.filter(p => p.alive);
+          const done = alivePlayers.filter(p => gameState.data.trustChoices[p.id]).length;
+          trustStatus.textContent = `${done}/${alivePlayers.length} 已选择`;
+        }
+        
+        // AI选择不显示具体内容，只显示"已确定"
+        const trustConfirmed = document.getElementById('trust-confirmed');
+        const trustConfirmedVal = document.getElementById('trust-confirmed-val');
+        if (trustConfirmed && trustConfirmedVal) {
+          trustConfirmed.style.display = 'block';
+          trustConfirmedVal.textContent = '***';
+        }
+        
+        broadcast({ type: 'gameAction', action: 'trust', payload: { id: current.id, choice: trustChoice } });
+        console.log('AI信任博弈:', current.name, '选择:', trustChoice);
+        
+        // 检查是否所有人都已选择
+        const trustAlive = gameState.players.filter(p => p.alive);
+        const trustDone = trustAlive.filter(p => gameState.data.trustChoices[p.id]).length;
+        
+        if (trustDone >= trustAlive.length) {
+          // 所有人都选择了，结算
+          checkTrustEnd();
+        } else {
+          // 还有人没选择，推进到下一个AI
+          gameState.turn++;
+          setTimeout(() => processAITurn(), 500);
+        }
+        break;
+        
+      case 8: // 黑手党 - 智能杀人
+        // 确保mafiaVotes对象存在
+        if (!gameState.data.mafiaVotes) gameState.data.mafiaVotes = {};
+        
+        if (gameState.data.mafiaPhase === 'night') {
+          if (current.id === gameState.data.mafiaKiller) {
+            // 杀手：随机选择，但避免杀自己
+            const victims = alive.filter(p => p.id !== current.id);
+            if (victims.length > 0) {
+              const victim = victims[randInt(0, victims.length - 1)];
+              console.log('AI黑手党杀手:', current.name, '杀:', victim.name);
+              
+              // 显示AI正在行动
+              const killConfirmed = document.getElementById('mafia-kill-confirmed');
+              if (killConfirmed) {
+                killConfirmed.style.display = 'block';
+                killConfirmed.textContent = `${current.name} 已选择目标...`;
+              }
+              
+              mafiaKill(victim.id);
+            }
+          } else {
+            // 非杀手在夜晚不需要行动，直接跳过
+            console.log('AI黑手党:', current.name, '不是杀手，等待白天');
+          }
+        } else if (gameState.data.mafiaPhase === 'day') {
+          // 投票：随机选择，但避免投自己
+          const targets = alive.filter(p => p.id !== current.id);
+          if (targets.length > 0) {
+            const target = targets[randInt(0, targets.length - 1)];
+            gameState.data.mafiaVotes[current.id] = target.id;
+            
+            // 更新UI
+            const voteStatus = document.getElementById('mafia-vote-status');
+            if (voteStatus) {
+              const alivePlayers = gameState.players.filter(p => p.alive);
+              const done = alivePlayers.filter(p => gameState.data.mafiaVotes[p.id]).length;
+              voteStatus.textContent = `${done}/${alivePlayers.length} 已投票`;
+            }
+            
+            // AI投票不显示，只更新状态计数
+            const voteConfirmed = document.getElementById('mafia-vote-confirmed');
+            if (voteConfirmed) {
+              voteConfirmed.style.display = 'none';
+            }
+            
+            broadcast({ type: 'gameAction', action: 'mafia', payload: { id: current.id, target: target.id } });
+            console.log('AI黑手党投票:', current.name, '投:', target.name);
+            
+            // 检查是否所有人都已投票
+            const mafiaAlive = gameState.players.filter(p => p.alive);
+            const mafiaDone = mafiaAlive.filter(p => gameState.data.mafiaVotes[p.id]).length;
+            
+            if (mafiaDone >= mafiaAlive.length) {
+              // 所有人都投票了，结算
+              checkMafiaVoteEnd();
+            } else {
+              // 还有人没投票，推进到下一个AI
+              gameState.turn++;
+              setTimeout(() => processAITurn(), 500);
+            }
+          }
+        }
+        break;
+        
+      case 9: // 最后晚餐 - 智能投票
+        // 策略：避免投自己，随机选择
+        const dinnerTargets = alive.filter(p => p.id !== current.id);
+        if (dinnerTargets.length > 0) {
+          const target = dinnerTargets[randInt(0, dinnerTargets.length - 1)];
+          
+          // 确保dinnerVotes对象存在
+          if (!gameState.data.dinnerVotes) gameState.data.dinnerVotes = {};
+          gameState.data.dinnerVotes[current.id] = target.id;
+          
+          // 更新UI
+          const dinnerStatus = document.getElementById('dinner-status');
+          if (dinnerStatus) {
+            const alivePlayers = gameState.players.filter(p => p.alive);
+            const done = alivePlayers.filter(p => gameState.data.dinnerVotes[p.id]).length;
+            dinnerStatus.textContent = `${done}/${alivePlayers.length} 已投票`;
+          }
+          
+          // AI投票不显示，只更新状态计数
+          const dinnerConfirmed = document.getElementById('dinner-confirmed');
+          if (dinnerConfirmed) {
+            dinnerConfirmed.style.display = 'none';
+          }
+          
+          broadcast({ type: 'gameAction', action: 'dinner', payload: { id: current.id, target: target.id } });
+          console.log('AI最后晚餐:', current.name, '投:', target.name);
+          
+          // 检查是否所有人都已投票
+          const dinnerAlive = gameState.players.filter(p => p.alive);
+          const dinnerDone = dinnerAlive.filter(p => gameState.data.dinnerVotes[p.id]).length;
+          
+          if (dinnerDone >= dinnerAlive.length) {
+            // 所有人都投票了，结算
+            checkDinnerEnd();
+          } else {
+            // 还有人没投票，推进到下一个AI
+            gameState.turn++;
+            setTimeout(() => processAITurn(), 500);
+          }
+        }
+        break;
+        
+      case 10: // 命运之轮 - 直接转
+        if (current.isAI || current.id === myPeerId || isHost) {
+          console.log('AI命运之轮:', current.name, '转动');
+          doSpin();
+        }
+        break;
+    }
+  }, thinkTime);
+}
+
+// ==================== LEVEL 1: HIGH/LOW ====================
+function initHighLow(area) {
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) { endGame(alive[0]); return; }
+
+  const current = alive[gameState.turn % alive.length];
+  
+  const card = drawCard();
+  gameState.data.currentCard = card;
+  gameState.data.currentPlayer = current.id;
+
+  // 显示当前玩家视角（包括AI）
+  area.innerHTML = `
+    <div style="text-align:center">
+      <div style="color:var(--muted);margin-bottom:10px">当前玩家: ${current.name} ${current.isAI ? '(AI)' : ''}</div>
+      <div class="card-display" style="margin:0 auto 20px">
+        <div class="card-rank">${card.rank}</div>
+        <div class="card-suit">${card.suit}</div>
+        <div class="card-rank-bottom">${card.rank}</div>
+      </div>
+      <div style="font-size:14px;margin-bottom:10px">下一张比 ${card.rank} 高还是低？</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">A=14, K=13, Q=12, J=11, 10-2</div>
+      <div class="game-controls" id="hl-controls">
+        <button class="game-btn" id="btn-high">高 (Higher)</button>
+        <button class="game-btn" id="btn-low">低 (Lower)</button>
+      </div>
+      <div id="ai-thinking" style="display:none;color:var(--gold);margin-top:10px">AI思考中...</div>
+    </div>
+  `;
+
+  // AI回合
+  if (current.isAI) {
+    document.getElementById('hl-controls').style.display = 'none';
+    document.getElementById('ai-thinking').style.display = 'block';
+    document.getElementById('ai-thinking').innerHTML = `
+      <span style="color:var(--gold)">✦</span> ${current.name} 正在行动...
+      <button onclick="skipAI()" style="margin-left:10px;padding:2px 8px;font-size:11px;background:var(--panel);border:1px solid var(--border);color:var(--muted);cursor:pointer">跳过</button>
+    `;
+    setTimeout(() => processAITurn(), 500);
+    return;
+  }
+  
+  // 非当前玩家等待
+  if (current.id !== myPeerId && !isHost) {
+    document.getElementById('hl-controls').style.display = 'none';
+    document.getElementById('ai-thinking').style.display = 'block';
+    document.getElementById('ai-thinking').textContent = '等待其他玩家...';
+    return;
+  }
+
+  document.getElementById('btn-high').onclick = () => guessHighLow('high');
+  document.getElementById('btn-low').onclick = () => guessHighLow('low');
+}
+
+function drawCard() {
+  const suit = randChoice(SUITS);
+  const rank = randChoice(RANKS);
+  return { suit, rank, value: RANKS.indexOf(rank) + 1 };
+}
+
+function skipAI() {
+  // 跳过当前AI的思考时间，立即执行
+  if (gameState) {
+    processAITurn();
+  }
+}
+
+function guessHighLow(guess) {
+  const current = gameState.players.find(p => p.id === gameState.data.currentPlayer);
+  const oldCard = gameState.data.currentCard;
+  const newCard = drawCard();
+
+  const isHigher = newCard.value > oldCard.value;
+  const isEqual = newCard.value === oldCard.value;
+  const correct = !isEqual && ((guess === 'high' && isHigher) || (guess === 'low' && !isHigher));
+
+  showResult(correct ? 'win' : 'lose',
+    isEqual ? '平局！' : (correct ? '猜对了！' : '猜错了！'),
+    `新牌: ${newCard.suit}${newCard.rank} ${isEqual ? '相同' : (isHigher ? '更高' : '更低')}`
+  );
+
+  if (!correct) {
+    current.alive = false;
+    if (isEqual) {
+      addChat({ text: `${current.name} 平局出局！` }, true);
+    } else {
+      addChat({ text: `${current.name} 猜错出局！` }, true);
+    }
+  }
+
+  // 更新玩家状态列表
+  updatePlayerStatusList();
+
+  gameState.turn++;
+  broadcast({ type: 'gameState', state: gameState });
+
+  setTimeout(() => {
+    hideResult();
+    // 检查人类玩家是否被淘汰
+    if (!isHumanAlive()) {
+      endGame(null);
+      return;
+    }
+    const alive = gameState.players.filter(p => p.alive);
+    if (alive.length <= 1) endGame(alive[0]);
+    else initHighLow(document.getElementById('game-area'));
+  }, 2000);
+}
+
+// ==================== LEVEL 2: GUESS NUMBER ====================
+function initGuessNumber(area) {
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) { endGame(alive[0]); return; }
+
+  if (!gameState.data.target) {
+    gameState.data.target = randInt(1, 100);
+    gameState.data.min = 1;
+    gameState.data.max = 100;
+    gameState.data.history = [];
+  }
+
+  const current = alive[gameState.turn % alive.length];
+  
+  // 检查范围是否只剩一个数字（必死局）
+  const rangeSize = gameState.data.max - gameState.data.min + 1;
+  const isDeadEnd = rangeSize <= 2;
+
+  area.innerHTML = `
+    <div style="text-align:center">
+      <div style="color:var(--muted);margin-bottom:10px">当前: ${current.name} ${current.isAI ? '(AI)' : ''}</div>
+      <div class="range-display">${gameState.data.min} - ${gameState.data.max}</div>
+      <div style="font-size:12px;color:var(--muted);margin:10px 0">猜中数字者出局</div>
+      ${isDeadEnd ? `<div style="font-size:13px;color:var(--red-glow);margin-bottom:10px">⚠️ 危险！范围很小，必死局！</div>` : ''}
+      <div class="number-input-group" style="justify-content:center;margin:20px 0" id="guess-controls">
+        <input type="text" id="guess-input" placeholder="?" maxlength="3">
+        <button class="game-btn" id="btn-guess">猜测</button>
+      </div>
+      <div id="ai-thinking-gn" style="display:none;color:var(--gold);margin-top:10px">AI思考中...</div>
+      <div style="font-size:11px;color:var(--muted);max-width:300px;margin:10px auto 0">
+        ${gameState.data.history.map(h => `${h.name}: ${h.guess} → ${h.result}`).join('<br>')}
+      </div>
+    </div>
+  `;
+
+  // AI回合
+  if (current.isAI) {
+    document.getElementById('guess-controls').style.display = 'none';
+    document.getElementById('ai-thinking-gn').style.display = 'block';
+    document.getElementById('ai-thinking-gn').innerHTML = `
+      <span style="color:var(--gold)">✦</span> ${current.name} 正在行动...
+      <button onclick="skipAI()" style="margin-left:10px;padding:2px 8px;font-size:11px;background:var(--panel);border:1px solid var(--border);color:var(--muted);cursor:pointer">跳过</button>
+    `;
+    setTimeout(() => processAITurn(), 500);
+    return;
+  }
+
+  if (current.id === myPeerId || isHost) {
+    const input = document.getElementById('guess-input');
+    input.focus();
+    document.getElementById('btn-guess').onclick = () => doGuess(input.value);
+    input.onkeydown = e => { if (e.key === 'Enter') doGuess(input.value); };
+  } else {
+    document.getElementById('guess-input').disabled = true;
+    document.getElementById('btn-guess').disabled = true;
+    document.getElementById('ai-thinking-gn').style.display = 'block';
+    document.getElementById('ai-thinking-gn').textContent = '等待其他玩家...';
+  }
+}
+
+function doGuess(val) {
+  const guess = parseInt(val);
+  if (isNaN(guess) || guess < gameState.data.min || guess > gameState.data.max) return;
+
+  const current = gameState.players.filter(p => p.alive)[gameState.turn % gameState.players.filter(p => p.alive).length];
+  const target = gameState.data.target;
+
+  let result;
+  if (guess === target) {
+    result = '猜中！出局！';
+    current.alive = false;
+    addChat({ text: `${current.name} 猜中 ${target}，出局！` }, true);
+  } else if (guess < target) {
+    result = '太小了';
+    gameState.data.min = Math.max(gameState.data.min, guess + 1);
+  } else {
+    result = '太大了';
+    gameState.data.max = Math.min(gameState.data.max, guess - 1);
+  }
+  
+  // 检查是否只剩一个数字（下一个玩家必死）
+  const newRangeSize = gameState.data.max - gameState.data.min + 1;
+  if (newRangeSize === 1 && current.alive) {
+    addChat({ text: `⚠️ 只剩数字 ${gameState.data.min}，下一位必死！` }, true);
+  }
+
+  gameState.data.history.push({ name: current.name, guess, result });
+  
+  // 显示AI猜测的数字
+  showResult(guess === target ? 'lose' : 'win', `${current.name} 猜测: ${guess}`, result);
+  
+  // 更新玩家状态列表
+  updatePlayerStatusList();
+  
+  gameState.turn++;
+  broadcast({ type: 'gameState', state: gameState });
+
+  // 检查人类玩家是否被淘汰
+  if (!isHumanAlive()) {
+    setTimeout(() => { hideResult(); endGame(null); }, 2000);
+    return;
+  }
+
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) {
+    setTimeout(() => { hideResult(); endGame(alive[0]); }, 2000);
+  } else {
+    setTimeout(() => {
+      hideResult();
+      initGuessNumber(document.getElementById('game-area'));
+    }, 1500);
+  }
+}
+
+// ==================== LEVEL 3: RUSSIAN ROULETTE ====================
+function initRoulette(area) {
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) { endGame(alive[0]); return; }
+
+  // 每轮重新开始时重新装填（确保6次内必定有人失败）
+  if (!gameState.data.chambers || gameState.data.rouletteReset) {
+    gameState.data.chambers = [true, false, false, false, false, false];
+    for (let i = gameState.data.chambers.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [gameState.data.chambers[i], gameState.data.chambers[j]] = [gameState.data.chambers[j], gameState.data.chambers[i]];
+    }
+    gameState.data.currentChamber = 0;
+    gameState.data.rouletteReset = false;
+  }
+
+  const current = alive[gameState.turn % alive.length];
+
+  area.innerHTML = `
+    <div style="text-align:center">
+      <div style="color:var(--muted);margin-bottom:10px">当前: ${current.name} ${current.isAI ? '(AI)' : ''}</div>
+      <div class="revolver-cylinder" id="cylinder">
+        ${[0,1,2,3,4,5].map(i => `
+          <div class="revolver-chamber ${i === gameState.data.currentChamber ? 'active' : (i < gameState.data.currentChamber ? 'fired' : '')}"
+               style="transform:rotate(${i * 60}deg);top:${50 - 40 * Math.cos(i * Math.PI / 3)}%;left:${50 + 40 * Math.sin(i * Math.PI / 3)}%">
+          </div>
+        `).join('')}
+      </div>
+      <div style="font-size:14px;margin:10px 0">${6 - gameState.data.currentChamber} / 6 槽剩余</div>
+      <button class="game-btn" id="btn-fire" style="display:none">扣扳机</button>
+      <div id="ai-thinking-rl" style="display:none;color:var(--gold);margin-top:10px">AI思考中...</div>
+    </div>
+  `;
+
+  // AI回合
+  if (current.isAI) {
+    document.getElementById('ai-thinking-rl').style.display = 'block';
+    document.getElementById('ai-thinking-rl').innerHTML = `
+      <span style="color:var(--gold)">✦</span> ${current.name} 正在行动...
+      <button onclick="skipAI()" style="margin-left:10px;padding:2px 8px;font-size:11px;background:var(--panel);border:1px solid var(--border);color:var(--muted);cursor:pointer">跳过</button>
+    `;
+    setTimeout(() => processAITurn(), 1000);
+    return;
+  }
+
+  if (current.id === myPeerId || isHost) {
+    document.getElementById('btn-fire').style.display = 'inline-block';
+    document.getElementById('btn-fire').onclick = doFire;
+  } else {
+    document.getElementById('ai-thinking-rl').style.display = 'block';
+    document.getElementById('ai-thinking-rl').textContent = '等待其他玩家...';
+  }
+}
+
+function doFire() {
+  const current = gameState.players.filter(p => p.alive)[gameState.turn % gameState.players.filter(p => p.alive).length];
+  const chamber = gameState.data.currentChamber;
+  const hasBullet = gameState.data.chambers[chamber];
+  
+  // 禁用按钮，防止重复点击
+  const btn = document.getElementById('btn-fire');
+  if (btn) btn.disabled = true;
+
+  // 紧张感：显示"咔哒..."
+  showResult('win', '咔哒...', `${current.name} 扣动扳机...`);
+  
+  // 延迟显示结果，增加紧张感
+  setTimeout(() => {
+    if (hasBullet) {
+      current.alive = false;
+      addChat({ text: `💥 ${current.name} 中弹出局！` }, true);
+      showResult('lose', '砰！', `${current.name} 被淘汰`);
+      
+      // 屏幕震动效果
+      document.body.style.animation = 'shake 0.5s';
+      setTimeout(() => { document.body.style.animation = ''; }, 500);
+      
+      // 有人中弹，重置轮盘，下一轮重新开始
+      gameState.data.rouletteReset = true;
+    } else {
+      addChat({ text: `${current.name} 存活，轮到下一位` }, true);
+      showResult('win', '安全', '枪是空的，继续...');
+    }
+
+    gameState.data.currentChamber++;
+    
+    // 更新玩家状态列表
+    updatePlayerStatusList();
+    
+    gameState.turn++;
+    broadcast({ type: 'gameState', state: gameState });
+
+    setTimeout(() => {
+      hideResult();
+      // 检查人类玩家是否被淘汰
+      if (!isHumanAlive()) {
+        endGame(null);
+        return;
+      }
+      const alive = gameState.players.filter(p => p.alive);
+      if (alive.length <= 1) endGame(alive[0]);
+      else initRoulette(document.getElementById('game-area'));
+    }, 2000);
+  }, 1000);
+}
+
+// ==================== LEVEL 4: REACTION ====================
+function initReaction(area) {
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) { endGame(alive[0]); return; }
+
+  // 重置本轮数据
+  gameState.data.reactionResults = {};
+  gameState.data.reactionStarted = false;
+  gameState.data.reactionGo = null;
+  gameState.data.reactionEarly = false;
+
+  area.innerHTML = `
+    <div style="text-align:center">
+      <div style="color:var(--muted);margin-bottom:10px">点击绿色区域！最快者存活</div>
+      <div class="reaction-box waiting" id="reaction-box">
+        等待绿色...
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)" id="reaction-status">
+        0/${alive.length} 已完成
+      </div>
+      <div id="reaction-early-msg" style="display:none;color:var(--red-glow);margin-top:10px;font-size:14px">
+        点太早了！3秒后重新开始...
+      </div>
+    </div>
+  `;
+
+  // 开始新一轮
+  const delay = randInt(2000, 5000);
+  gameState.data.reactionDelayTimer = setTimeout(() => {
+    if (!gameState.data.reactionGo && gameState.level === 4 && !gameState.data.reactionEarly) {
+      gameState.data.reactionGo = Date.now();
+      broadcast({ type: 'gameState', state: gameState });
+      const box = document.getElementById('reaction-box');
+      if (box) {
+        box.className = 'reaction-box ready';
+        box.textContent = '点击！';
+      }
+      // AI自动反应 - 所有AI同时反应
+      const aliveAI = gameState.players.filter(p => p.alive && p.isAI);
+      aliveAI.forEach((ai, index) => {
+        setTimeout(() => {
+          if (gameState && gameState.data && gameState.data.reactionGo && !gameState.data.reactionResults[ai.id]) {
+            const aiReactionDelay = randInt(200, 600);
+            const time = Date.now() - gameState.data.reactionGo + aiReactionDelay;
+            gameState.data.reactionResults[ai.id] = time;
+            broadcast({ type: 'gameAction', action: 'reaction', payload: { id: ai.id, time } });
+            console.log('AI反应测试:', ai.name, '时间:', time, 'ms');
+            checkReactionEnd();
+          }
+        }, index * 100);
+      });
+    }
+  }, delay);
+
+  const box = document.getElementById('reaction-box');
+  box.onclick = () => {
+    if (gameState.data.reactionEarly) return; // 已经点早了，忽略后续点击
+    
+    if (!gameState.data.reactionGo) {
+      // 点太早了 - 重新开始本轮
+      gameState.data.reactionEarly = true;
+      box.className = 'reaction-box clicked';
+      box.textContent = '太早了！';
+      document.getElementById('reaction-early-msg').style.display = 'block';
+      
+      // 清除延迟计时器，防止变绿
+      if (gameState.data.reactionDelayTimer) {
+        clearTimeout(gameState.data.reactionDelayTimer);
+        gameState.data.reactionDelayTimer = null;
+      }
+      
+      // 广播给所有人，让所有人重新开始
+      broadcast({ type: 'gameAction', action: 'reactionEarly', payload: {} });
+      
+      // 3秒后重新开始
+      setTimeout(() => {
+        gameState.data.reactionEarly = false;
+        gameState.data.reactionGo = null;
+        initReaction(document.getElementById('game-area'));
+      }, 3000);
+      return;
+    }
+    
+    if (!gameState.data.reactionResults[myPeerId]) {
+      const time = Date.now() - gameState.data.reactionGo;
+      gameState.data.reactionResults[myPeerId] = time;
+      box.className = 'reaction-box clicked';
+      box.textContent = `${time}ms`;
+      broadcast({ type: 'gameAction', action: 'reaction', payload: { id: myPeerId, time } });
+      checkReactionEnd();
+    }
+  };
+}
+
+function handleGameAction(action, payload, from) {
+  if (action === 'reaction') {
+    gameState.data.reactionResults[payload.id] = payload.time;
+    checkReactionEnd();
+  } else if (action === 'reactionEarly') {
+    // 有人点太早了，所有人重置
+    gameState.data.reactionEarly = true;
+    const box = document.getElementById('reaction-box');
+    if (box) {
+      box.className = 'reaction-box clicked';
+      box.textContent = '太早了！';
+    }
+    const msg = document.getElementById('reaction-early-msg');
+    if (msg) msg.style.display = 'block';
+  } else if (action === 'mind') {
+    gameState.data.mindResults = gameState.data.mindResults || {};
+    gameState.data.mindResults[payload.id] = payload.value;
+    checkMindEnd();
+  } else if (action === 'minority') {
+    gameState.data.minorityVotes = gameState.data.minorityVotes || {};
+    gameState.data.minorityVotes[payload.id] = payload.choice;
+    checkMinorityEnd();
+  } else if (action === 'minorityReset') {
+    // 平票重置，清除本地已选择状态
+    if (gameState.data.minorityVotes) {
+      delete gameState.data.minorityVotes[myPeerId];
+    }
+  } else if (action === 'trust') {
+    gameState.data.trustChoices = gameState.data.trustChoices || {};
+    gameState.data.trustChoices[payload.id] = payload.choice;
+    checkTrustEnd();
+  } else if (action === 'mafia') {
+    handleMafiaAction(payload);
+  } else if (action === 'dinner') {
+    gameState.data.dinnerVotes = gameState.data.dinnerVotes || {};
+    gameState.data.dinnerVotes[payload.id] = payload.target;
+    checkDinnerEnd();
+  } else if (action === 'wheel') {
+    handleWheelResult(payload);
+  }
+}
+
+function checkReactionEnd() {
+  const alive = gameState.players.filter(p => p.alive);
+  const done = alive.filter(p => gameState.data.reactionResults[p.id]).length;
+  const statusEl = document.getElementById('reaction-status');
+  if (statusEl) statusEl.textContent = `${done}/${alive.length} 已完成`;
+
+  if (done >= alive.length) {
+    const sorted = alive.slice().sort((a, b) => gameState.data.reactionResults[a.id] - gameState.data.reactionResults[b.id]);
+    
+    // 检查平局（多人反应时间相同且最慢）
+    const slowestTime = gameState.data.reactionResults[sorted[sorted.length - 1].id];
+    const tiedLosers = sorted.filter(p => gameState.data.reactionResults[p.id] === slowestTime);
+    
+    let loser;
+    if (tiedLosers.length > 1) {
+      // 平局：随机淘汰其中一个
+      loser = tiedLosers[randInt(0, tiedLosers.length - 1)];
+      addChat({ text: `⏱️ ${tiedLosers.map(p => p.name).join('、')} 并列最慢（${slowestTime}ms），随机淘汰: ${loser.name}` }, true);
+    } else {
+      loser = sorted[sorted.length - 1];
+      addChat({ text: `⏱️ ${loser.name} 最慢 (${slowestTime}ms)，出局！` }, true);
+    }
+    
+    loser.alive = false;
+
+    // 更新玩家状态列表
+    updatePlayerStatusList();
+
+    // 检查人类玩家是否被淘汰
+    if (!isHumanAlive()) {
+      endGame(null);
+      return;
+    }
+
+    const remaining = gameState.players.filter(p => p.alive);
+    if (remaining.length <= 1) {
+      endGame(remaining[0]);
+    } else {
+      gameState.data.reactionStarted = false;
+      gameState.data.reactionGo = null;
+      gameState.data.reactionResults = {};
+      // 不增加turn，让initReaction重新计算
+      broadcast({ type: 'gameState', state: gameState });
+      setTimeout(() => initReaction(document.getElementById('game-area')), 2000);
+    }
+  }
+}
+
+// ==================== LEVEL 5: MIND GAME ====================
+function initMindGame(area) {
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) { endGame(alive[0]); return; }
+
+  // 找到第一个未行动的AI的索引
+  let startTurn = 0;
+  for (let i = 0; i < alive.length; i++) {
+    if (alive[i].isAI && (!gameState.data.mindResults || gameState.data.mindResults[alive[i].id] === undefined)) {
+      startTurn = i;
+      break;
+    }
+  }
+  gameState.turn = startTurn;
+
+  if (!gameState.data.mindTarget) {
+    gameState.data.mindTarget = randInt(1, 100);
+    gameState.data.mindResults = {};
+  }
+  
+  // 确保mindResults对象存在
+  if (!gameState.data.mindResults) gameState.data.mindResults = {};
+
+  const myResult = gameState.data.mindResults[myPeerId];
+
+  area.innerHTML = `
+    <div style="text-align:center">
+      <div style="color:var(--muted);margin-bottom:10px">目标数字: 1-100</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:20px">同时输入数字，与目标差值大者出局</div>
+      <div class="number-input-group" style="justify-content:center" id="mind-controls">
+        <input type="text" id="mind-input" placeholder="1-100" maxlength="3" value="${myResult || ''}">
+        <button class="game-btn" id="btn-mind">确定</button>
+      </div>
+      <div id="mind-confirmed" style="display:none;color:var(--green-glow);margin-top:10px;font-size:14px">
+        ✓ 已确定: <span id="mind-confirmed-val"></span>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)" id="mind-status">
+        ${alive.filter(p => gameState.data.mindResults[p.id] !== undefined).length}/${alive.length} 已选择
+      </div>
+    </div>
+  `;
+
+  // 如果已经选择过了，显示已确定
+  if (myResult) {
+    document.getElementById('mind-controls').style.display = 'none';
+    document.getElementById('mind-confirmed').style.display = 'block';
+    document.getElementById('mind-confirmed-val').textContent = myResult;
+  } else {
+    const input = document.getElementById('mind-input');
+    input.focus();
+    document.getElementById('btn-mind').onclick = () => {
+      const val = parseInt(input.value);
+      if (val >= 1 && val <= 100) {
+        gameState.data.mindResults[myPeerId] = val;
+        
+        // 显示已确定
+        document.getElementById('mind-controls').style.display = 'none';
+        document.getElementById('mind-confirmed').style.display = 'block';
+        document.getElementById('mind-confirmed-val').textContent = val;
+        
+        // 更新左上角玩家状态
+        updatePlayerStatusList();
+        
+        broadcast({ type: 'gameAction', action: 'mind', payload: { id: myPeerId, value: val } });
+        checkMindEnd();
+      }
+    };
+    input.onkeydown = e => { if (e.key === 'Enter') document.getElementById('btn-mind').click(); };
+  }
+  
+  // AI自动选择 - 轮流制，触发所有未行动的AI
+  setTimeout(() => processAITurn(), 500);
+}
+
+function checkMindEnd() {
+  const alive = gameState.players.filter(p => p.alive);
+  // 确保mindResults对象存在
+  if (!gameState.data.mindResults) gameState.data.mindResults = {};
+  const done = alive.filter(p => gameState.data.mindResults[p.id] !== undefined).length;
+  const status = document.getElementById('mind-status');
+  if (status) status.textContent = `${done}/${alive.length} 已选择`;
+
+  if (done >= alive.length) {
+    const target = gameState.data.mindTarget;
+    
+    // 显示所有人的选择
+    const resultsText = alive.map(p => {
+      const val = gameState.data.mindResults[p.id];
+      const diff = Math.abs(val - target);
+      return `${p.name}: ${val} (差${diff})`;
+    }).join(' · ');
+    addChat({ text: `🎯 目标: ${target} · ${resultsText}` }, true);
+    
+    const sorted = alive.slice().sort((a, b) => {
+      const da = Math.abs(gameState.data.mindResults[a.id] - target);
+      const db = Math.abs(gameState.data.mindResults[b.id] - target);
+      return da - db;
+    });
+    const loser = sorted[sorted.length - 1];
+    
+    // 检查平局（多人差值相同且最大）
+    const maxDiff = Math.abs(gameState.data.mindResults[loser.id] - target);
+    const tiedLosers = alive.filter(p => Math.abs(gameState.data.mindResults[p.id] - target) === maxDiff);
+    
+    if (tiedLosers.length > 1) {
+      // 平局：随机淘汰其中一个
+      const randomLoser = tiedLosers[randInt(0, tiedLosers.length - 1)];
+      randomLoser.alive = false;
+      addChat({ text: `⚠️ ${tiedLosers.map(p => p.name).join('、')} 差值相同（${maxDiff}），随机淘汰: ${randomLoser.name}` }, true);
+    } else {
+      loser.alive = false;
+      addChat({ text: `${loser.name} 差值最大（${maxDiff}），出局！` }, true);
+    }
+
+    // 更新玩家状态列表
+    updatePlayerStatusList();
+
+    // 检查人类玩家是否被淘汰
+    if (!isHumanAlive()) {
+      endGame(null);
+      return;
+    }
+
+    const remaining = gameState.players.filter(p => p.alive);
+    if (remaining.length <= 1) {
+      endGame(remaining[0]);
+    } else {
+      gameState.data.mindTarget = randInt(1, 100);
+      gameState.data.mindResults = {};
+      // 不增加turn，让initMindGame重新计算第一个未行动的AI
+      broadcast({ type: 'gameState', state: gameState });
+      setTimeout(() => initMindGame(document.getElementById('game-area')), 3000);
+    }
+  }
+}
+
+// ==================== LEVEL 6: MINORITY ====================
+function initMinority(area) {
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length < 3) { endGame(alive[0]); return; }
+
+  // 找到第一个未行动的AI的索引
+  let startTurn = 0;
+  for (let i = 0; i < alive.length; i++) {
+    if (alive[i].isAI && (!gameState.data.minorityVotes || !gameState.data.minorityVotes[alive[i].id])) {
+      startTurn = i;
+      break;
+    }
+  }
+  gameState.turn = startTurn;
+
+  if (!gameState.data.minorityRound) {
+    gameState.data.minorityRound = 1;
+    gameState.data.minorityVotes = {};
+    gameState.data.minorityOptions = randChoice([
+      ['红', '蓝'],
+      ['左', '右'],
+      ['A', 'B'],
+      ['是', '否']
+    ]);
+  }
+  
+  // 确保minorityVotes对象存在
+  if (!gameState.data.minorityVotes) gameState.data.minorityVotes = {};
+
+  const [optA, optB] = gameState.data.minorityOptions;
+  const myVote = gameState.data.minorityVotes[myPeerId];
+
+  area.innerHTML = `
+    <div style="text-align:center">
+      <div style="color:var(--muted);margin-bottom:10px">第${gameState.data.minorityRound}轮 · 少数派存活</div>
+      <div style="font-size:14px;margin-bottom:20px">选择人数少的一方存活</div>
+      <div class="vote-options" id="minority-controls">
+        <button class="vote-btn ${myVote === 'a' ? 'selected' : ''}" id="btn-opt-a">${optA}</button>
+        <button class="vote-btn ${myVote === 'b' ? 'selected' : ''}" id="btn-opt-b">${optB}</button>
+      </div>
+      <div id="minority-confirmed" style="display:none;color:var(--green-glow);margin-top:10px;font-size:14px">
+        ✓ 已选择: <span id="minority-confirmed-val"></span>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)" id="minority-status">
+        ${alive.filter(p => gameState.data.minorityVotes[p.id]).length}/${alive.length} 已选择
+      </div>
+    </div>
+  `;
+
+  // 如果已经选择过了
+  if (myVote) {
+    document.getElementById('minority-controls').style.display = 'none';
+    document.getElementById('minority-confirmed').style.display = 'block';
+    document.getElementById('minority-confirmed-val').textContent = myVote === 'a' ? optA : optB;
+  } else {
+    document.getElementById('btn-opt-a').onclick = () => {
+      gameState.data.minorityVotes[myPeerId] = 'a';
+      
+      // 显示已选择
+      document.getElementById('minority-controls').style.display = 'none';
+      document.getElementById('minority-confirmed').style.display = 'block';
+      document.getElementById('minority-confirmed-val').textContent = optA;
+      
+      // 更新左上角玩家状态
+      updatePlayerStatusList();
+      
+      broadcast({ type: 'gameAction', action: 'minority', payload: { id: myPeerId, choice: 'a' } });
+      checkMinorityEnd();
+    };
+    document.getElementById('btn-opt-b').onclick = () => {
+      gameState.data.minorityVotes[myPeerId] = 'b';
+      
+      // 显示已选择
+      document.getElementById('minority-controls').style.display = 'none';
+      document.getElementById('minority-confirmed').style.display = 'block';
+      document.getElementById('minority-confirmed-val').textContent = optB;
+      
+      // 更新左上角玩家状态
+      updatePlayerStatusList();
+      
+      broadcast({ type: 'gameAction', action: 'minority', payload: { id: myPeerId, choice: 'b' } });
+      checkMinorityEnd();
+    };
+  }
+  
+  // AI自动选择 - 轮流制，触发所有未行动的AI
+  setTimeout(() => processAITurn(), 500);
+}
+
+function checkMinorityEnd() {
+  const alive = gameState.players.filter(p => p.alive);
+  // 确保minorityVotes对象存在
+  if (!gameState.data.minorityVotes) gameState.data.minorityVotes = {};
+  const done = alive.filter(p => gameState.data.minorityVotes[p.id]).length;
+  const status = document.getElementById('minority-status');
+  if (status) status.textContent = `${done}/${alive.length} 已选择`;
+
+  if (done >= alive.length) {
+    const countA = alive.filter(p => gameState.data.minorityVotes[p.id] === 'a').length;
+    const countB = alive.filter(p => gameState.data.minorityVotes[p.id] === 'b').length;
+    
+    // 显示投票结果
+    const [optA, optB] = gameState.data.minorityOptions;
+    addChat({ text: `📊 ${optA}: ${countA}票 · ${optB}: ${countB}票` }, true);
+
+    let losers;
+    if (countA < countB) {
+      losers = alive.filter(p => gameState.data.minorityVotes[p.id] === 'b');
+      addChat({ text: `✓ ${optA}方 ${countA}人 为少数派，存活！` }, true);
+    } else if (countB < countA) {
+      losers = alive.filter(p => gameState.data.minorityVotes[p.id] === 'a');
+      addChat({ text: `✓ ${optB}方 ${countB}人 为少数派，存活！` }, true);
+    } else {
+      // 平票：所有人都安全，重新选择
+      addChat({ text: '⚠️ 平票！无人淘汰，重新选择...' }, true);
+      
+      // 重置投票和UI状态，进入下一轮
+      gameState.data.minorityVotes = {};
+      gameState.data.minorityOptions = randChoice([
+        ['红', '蓝'], ['左', '右'], ['A', 'B'], ['是', '否']
+      ]);
+      
+      // 清除所有玩家的已选择状态，让UI重新显示按钮
+      broadcast({ type: 'gameAction', action: 'minorityReset', payload: {} });
+      
+      setTimeout(() => initMinority(document.getElementById('game-area')), 2000);
+      return;
+    }
+
+    losers.forEach(p => p.alive = false);
+    
+    // 更新玩家状态列表
+    updatePlayerStatusList();
+
+    // 检查人类玩家是否被淘汰
+    if (!isHumanAlive()) {
+      endGame(null);
+      return;
+    }
+
+    const remaining = gameState.players.filter(p => p.alive);
+    if (remaining.length < 3) {
+      endGame(remaining[0]);
+    } else {
+      gameState.data.minorityRound++;
+      gameState.data.minorityVotes = {};
+      gameState.data.minorityOptions = randChoice([
+        ['红', '蓝'], ['左', '右'], ['A', 'B'], ['是', '否']
+      ]);
+      broadcast({ type: 'gameState', state: gameState });
+      setTimeout(() => initMinority(document.getElementById('game-area')), 2000);
+    }
+  }
+}
+
+// ==================== LEVEL 7: TRUST ====================
+function initTrust(area) {
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) { endGame(alive[0]); return; }
+
+  // 找到第一个未行动的AI的索引
+  let startTurn = 0;
+  for (let i = 0; i < alive.length; i++) {
+    if (alive[i].isAI && (!gameState.data.trustChoices || !gameState.data.trustChoices[alive[i].id])) {
+      startTurn = i;
+      break;
+    }
+  }
+  gameState.turn = startTurn;
+
+  gameState.data.trustChoices = gameState.data.trustChoices || {};
+  const myChoice = gameState.data.trustChoices[myPeerId];
+
+  area.innerHTML = `
+    <div style="text-align:center">
+      <div style="color:var(--muted);margin-bottom:10px">信任博弈</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:20px;max-width:400px">
+        双方合作 = 都存活<br>
+        双方背叛 = 都出局<br>
+        一方合作一方背叛 = 背叛者存活
+      </div>
+      <div class="trust-options" style="justify-content:center" id="trust-controls">
+        <button class="game-btn trust-btn ${myChoice === 'cooperate' ? 'selected' : ''}" id="btn-cooperate">合作</button>
+        <button class="game-btn trust-btn ${myChoice === 'betray' ? 'selected' : ''}" id="btn-betray">背叛</button>
+      </div>
+      <div id="trust-confirmed" style="display:none;color:var(--green-glow);margin-top:10px;font-size:14px">
+        ✓ 已选择: <span id="trust-confirmed-val"></span>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)" id="trust-status">
+        ${alive.filter(p => gameState.data.trustChoices[p.id]).length}/${alive.length} 已选择
+      </div>
+    </div>
+  `;
+
+  // 如果已经选择过了
+  if (myChoice) {
+    document.getElementById('trust-controls').style.display = 'none';
+    document.getElementById('trust-confirmed').style.display = 'block';
+    document.getElementById('trust-confirmed-val').textContent = myChoice === 'cooperate' ? '合作' : '背叛';
+  } else {
+    document.getElementById('btn-cooperate').onclick = () => {
+      gameState.data.trustChoices[myPeerId] = 'cooperate';
+      
+      // 显示已选择
+      document.getElementById('trust-controls').style.display = 'none';
+      document.getElementById('trust-confirmed').style.display = 'block';
+      document.getElementById('trust-confirmed-val').textContent = '合作';
+      
+      // 更新左上角玩家状态
+      updatePlayerStatusList();
+      
+      broadcast({ type: 'gameAction', action: 'trust', payload: { id: myPeerId, choice: 'cooperate' } });
+      checkTrustEnd();
+    };
+    document.getElementById('btn-betray').onclick = () => {
+      gameState.data.trustChoices[myPeerId] = 'betray';
+      
+      // 显示已选择
+      document.getElementById('trust-controls').style.display = 'none';
+      document.getElementById('trust-confirmed').style.display = 'block';
+      document.getElementById('trust-confirmed-val').textContent = '背叛';
+      
+      // 更新左上角玩家状态
+      updatePlayerStatusList();
+      
+      broadcast({ type: 'gameAction', action: 'trust', payload: { id: myPeerId, choice: 'betray' } });
+      checkTrustEnd();
+    };
+  }
+  
+  // AI自动选择 - 轮流制，触发所有未行动的AI
+  setTimeout(() => processAITurn(), 500);
+}
+
+function checkTrustEnd() {
+  const alive = gameState.players.filter(p => p.alive);
+  // 确保trustChoices对象存在
+  if (!gameState.data.trustChoices) gameState.data.trustChoices = {};
+  const done = alive.filter(p => gameState.data.trustChoices[p.id]).length;
+  const status = document.getElementById('trust-status');
+  if (status) status.textContent = `${done}/${alive.length} 已选择`;
+
+  if (done >= alive.length && done >= 2) {
+    // 显示所有人的选择
+    const choicesText = alive.map(p => {
+      const choice = gameState.data.trustChoices[p.id];
+      return `${p.name}: ${choice === 'cooperate' ? '合作' : '背叛'}`;
+    }).join(' · ');
+    addChat({ text: `🎭 ${choicesText}` }, true);
+    
+    // Pair up randomly
+    const shuffled = alive.slice().sort(() => Math.random() - 0.5);
+    
+    // 显示配对结果
+    const pairs = [];
+    for (let i = 0; i < shuffled.length - 1; i += 2) {
+      pairs.push(`${shuffled[i].name} vs ${shuffled[i + 1].name}`);
+    }
+    if (shuffled.length % 2 === 1) {
+      pairs.push(`${shuffled[shuffled.length - 1].name} 轮空`);
+    }
+    addChat({ text: `👥 配对: ${pairs.join(' · ')}` }, true);
+    
+    const losers = [];
+
+    for (let i = 0; i < shuffled.length - 1; i += 2) {
+      const a = shuffled[i];
+      const b = shuffled[i + 1];
+      const ca = gameState.data.trustChoices[a.id];
+      const cb = gameState.data.trustChoices[b.id];
+
+      if (ca === 'cooperate' && cb === 'cooperate') {
+        addChat({ text: `${a.name} ↔ ${b.name}: 双方合作，都存活` }, true);
+      } else if (ca === 'betray' && cb === 'betray') {
+        addChat({ text: `${a.name} ↔ ${b.name}: 双方背叛，都出局！` }, true);
+        losers.push(a, b);
+      } else if (ca === 'betray') {
+        addChat({ text: `${a.name} ↔ ${b.name}: ${a.name}背叛，${b.name}出局！` }, true);
+        losers.push(b);
+      } else {
+        addChat({ text: `${a.name} ↔ ${b.name}: ${b.name}背叛，${a.name}出局！` }, true);
+        losers.push(a);
+      }
+    }
+
+    // If odd number, last one is safe this round but gets a penalty next round
+    if (shuffled.length % 2 === 1) {
+      const byePlayer = shuffled[shuffled.length - 1];
+      addChat({ text: `${byePlayer.name} 本轮轮空，安全（但下轮必须第一个选择）` }, true);
+      // 记录轮空者，下轮强制第一个选择（增加策略性）
+      gameState.data.trustByePlayer = byePlayer.id;
+    }
+
+    losers.forEach(p => p.alive = false);
+    
+    // 更新玩家状态列表
+    updatePlayerStatusList();
+
+    // 检查人类玩家是否被淘汰
+    if (!isHumanAlive()) {
+      endGame(null);
+      return;
+    }
+
+    const remaining = gameState.players.filter(p => p.alive);
+    if (remaining.length <= 1) {
+      endGame(remaining[0]);
+    } else {
+      gameState.data.trustChoices = {};
+      broadcast({ type: 'gameState', state: gameState });
+      setTimeout(() => initTrust(document.getElementById('game-area')), 3000);
+    }
+  }
+}
+
+// ==================== LEVEL 8: MAFIA ====================
+function initMafia(area) {
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) { endGame(alive[0]); return; }
+
+  // 白天投票阶段：找到第一个未投票的玩家（优先AI）
+  if (gameState.data.mafiaPhase === 'day') {
+    let startTurn = 0;
+    // 先找未投票的AI
+    for (let i = 0; i < alive.length; i++) {
+      if (alive[i].isAI && (!gameState.data.mafiaVotes || !gameState.data.mafiaVotes[alive[i].id])) {
+        startTurn = i;
+        break;
+      }
+    }
+    // 如果没有未投票的AI，找第一个人类玩家
+    if (startTurn === 0 && alive[0] && alive[0].isAI && gameState.data.mafiaVotes && gameState.data.mafiaVotes[alive[0].id]) {
+      for (let i = 0; i < alive.length; i++) {
+        if (!alive[i].isAI && (!gameState.data.mafiaVotes || !gameState.data.mafiaVotes[alive[i].id])) {
+          startTurn = i;
+          break;
+        }
+      }
+    }
+    gameState.turn = startTurn;
+  }
+
+  if (!gameState.data.mafiaPhase) {
+    gameState.data.mafiaPhase = 'night';
+    gameState.data.mafiaKiller = alive[randInt(0, alive.length - 1)].id;
+    gameState.data.mafiaVictim = null;
+    gameState.data.mafiaVotes = {};
+    gameState.data.mafiaTimer = 15; // 15秒倒计时
+  }
+  
+  // 确保mafiaVotes对象存在
+  if (!gameState.data.mafiaVotes) gameState.data.mafiaVotes = {};
+
+  const phase = gameState.data.mafiaPhase;
+  const isKiller = myPeerId === gameState.data.mafiaKiller;
+  const currentKiller = alive.find(p => p.id === gameState.data.mafiaKiller);
+  const myVote = gameState.data.mafiaVotes[myPeerId];
+
+  if (phase === 'night') {
+    const killerName = currentKiller ? currentKiller.name : '???';
+    area.innerHTML = `
+      <div style="text-align:center">
+        <div style="color:var(--red-glow);font-size:18px;margin-bottom:10px">🌙 夜晚</div>
+        <div style="font-size:14px;color:var(--red-glow);margin-bottom:10px" id="mafia-timer">⏱️ ${gameState.data.mafiaTimer}秒</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+          本轮杀手: ${killerName} ${currentKiller && currentKiller.isAI ? '(AI)' : ''}
+        </div>
+        <div style="font-size:14px;margin-bottom:20px;padding:10px;background:rgba(192,57,43,0.1);border:1px solid var(--border);border-radius:4px">
+          ${isKiller ? '🔪 你是杀手，选择要淘汰的人' : '👁️ 杀手正在选择目标...'}
+        </div>
+        ${isKiller ? `
+          <div class="vote-options" id="mafia-kill-options">
+            ${alive.filter(p => p.id !== myPeerId).map(p => `
+              <button class="vote-btn" onclick="mafiaKill('${p.id}')">${p.name}</button>
+            `).join('')}
+          </div>
+          <div id="mafia-kill-confirmed" style="display:none;color:var(--green-glow);margin-top:10px">
+            ✓ 已选择目标
+          </div>
+        ` : '<div style="color:var(--muted)">等待杀手行动...</div>'}
+      </div>
+    `;
+    
+    // AI杀手自动行动（直接执行，不通过processAITurn）
+    if (currentKiller && currentKiller.isAI && !gameState.data.mafiaVictim) {
+      setTimeout(() => {
+        const victims = alive.filter(p => p.id !== currentKiller.id);
+        if (victims.length > 0) {
+          const victim = victims[randInt(0, victims.length - 1)];
+          console.log('AI黑手党杀手:', currentKiller.name, '杀:', victim.name);
+          
+          const killConfirmed = document.getElementById('mafia-kill-confirmed');
+          if (killConfirmed) {
+            killConfirmed.style.display = 'block';
+            killConfirmed.textContent = `${currentKiller.name} 已选择目标...`;
+          }
+          
+          mafiaKill(victim.id);
+        }
+      }, 800);
+    }
+    
+    // 启动倒计时
+    startMafiaTimer();
+  } else {
+    const victimName = gameState.data.mafiaVictim ? (gameState.players.find(p => p.id === gameState.data.mafiaVictim)?.name || '???') : null;
+    area.innerHTML = `
+      <div style="text-align:center">
+        <div style="color:var(--gold);font-size:18px;margin-bottom:10px">☀️ 白天</div>
+        <div style="font-size:14px;color:var(--gold);margin-bottom:10px" id="mafia-timer">⏱️ ${gameState.data.mafiaTimer}秒</div>
+        ${victimName ? `
+          <div style="font-size:14px;color:var(--red-glow);margin-bottom:10px;padding:8px;background:rgba(192,57,43,0.1);border:1px solid var(--border);border-radius:4px">
+            💀 ${victimName} 昨晚被杀手淘汰
+          </div>
+        ` : `
+          <div style="font-size:14px;color:var(--green-glow);margin-bottom:10px;padding:8px;background:rgba(46,204,113,0.1);border:1px solid var(--border);border-radius:4px">
+            ✓ 昨晚平安无事
+          </div>
+        `}
+        <div style="font-size:12px;margin-bottom:20px">投票处决疑似杀手</div>
+        <div class="vote-options" id="mafia-vote-options">
+          ${alive.map(p => `
+            <button class="vote-btn ${myVote === p.id ? 'selected' : ''}"
+                    onclick="mafiaVote('${p.id}')">${p.name}</button>
+          `).join('')}
+        </div>
+        <div id="mafia-vote-confirmed" style="display:none;color:var(--green-glow);margin-top:10px">
+          ✓ 已投票
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:var(--muted)" id="mafia-vote-status">
+          ${alive.filter(p => gameState.data.mafiaVotes[p.id]).length}/${alive.length} 已投票
+        </div>
+      </div>
+    `;
+    
+    // 如果已经投票了
+    if (myVote) {
+      document.getElementById('mafia-vote-options').style.display = 'none';
+      document.getElementById('mafia-vote-confirmed').style.display = 'block';
+    }
+    
+    // AI白天投票 - 轮流制，触发所有未行动的AI
+    setTimeout(() => processAITurn(), 500);
+    
+    // 启动倒计时
+    startMafiaTimer();
+  }
+}
+
+// 黑手党倒计时
+let mafiaTimerInterval = null;
+function startMafiaTimer() {
+  if (mafiaTimerInterval) clearInterval(mafiaTimerInterval);
+  
+  mafiaTimerInterval = setInterval(() => {
+    if (!gameState || gameState.level !== 8) {
+      clearInterval(mafiaTimerInterval);
+      return;
+    }
+    
+    gameState.data.mafiaTimer--;
+    const timerEl = document.getElementById('mafia-timer');
+    if (timerEl) timerEl.textContent = `⏱️ ${gameState.data.mafiaTimer}秒`;
+    
+    if (gameState.data.mafiaTimer <= 0) {
+      clearInterval(mafiaTimerInterval);
+      
+      // 时间到，自动处理
+      if (gameState.data.mafiaPhase === 'night') {
+        // 夜晚时间到，杀手未行动则随机杀人
+        if (!gameState.data.mafiaVictim) {
+          const alive = gameState.players.filter(p => p.alive);
+          const killer = alive.find(p => p.id === gameState.data.mafiaKiller);
+          if (killer && killer.isAI) {
+            // AI杀手会在processAITurn中处理，如果超时未行动则强制处理
+            setTimeout(() => processAITurn(), 100);
+          } else if (killer && !killer.isAI) {
+            // AI杀手已经处理了
+          } else if (!killer) {
+            // 杀手已死，直接进入白天
+            gameState.data.mafiaPhase = 'day';
+            gameState.data.mafiaVictim = null;
+            gameState.data.mafiaVotes = {};
+            gameState.data.mafiaTimer = 15;
+            broadcast({ type: 'gameState', state: gameState });
+            initMafia(document.getElementById('game-area'));
+          }
+        }
+      } else {
+        // 白天时间到，强制结束投票
+        checkMafiaVoteEnd();
+      }
+    }
+  }, 1000);
+}
+
+function mafiaKill(victimId) {
+  if (gameState.data.mafiaVictim) return; // 已经杀过了
+  
+  gameState.data.mafiaVictim = victimId;
+  const victim = gameState.players.find(p => p.id === victimId);
+  if (victim) {
+    victim.alive = false;
+    addChat({ text: `💀 ${victim.name} 在夜晚被杀手淘汰` }, true);
+  }
+  
+  // 更新玩家状态列表
+  updatePlayerStatusList();
+  
+  gameState.data.mafiaPhase = 'day';
+  gameState.data.mafiaVotes = {};
+  gameState.data.mafiaTimer = 15; // 重置白天倒计时
+  broadcast({ type: 'gameState', state: gameState });
+  
+  // 清除倒计时
+  if (mafiaTimerInterval) clearInterval(mafiaTimerInterval);
+  
+  // 检查是否只剩1人
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) {
+    endGame(alive[0]);
+  } else {
+    initMafia(document.getElementById('game-area'));
+  }
+}
+
+function mafiaVote(targetId) {
+  // 确保mafiaVotes对象存在
+  if (!gameState.data.mafiaVotes) gameState.data.mafiaVotes = {};
+  
+  if (gameState.data.mafiaVotes[myPeerId]) return; // 已经投过了
+  
+  gameState.data.mafiaVotes[myPeerId] = targetId;
+  
+  // 显示已投票
+  const voteOptions = document.getElementById('mafia-vote-options');
+  const voteConfirmed = document.getElementById('mafia-vote-confirmed');
+  if (voteOptions) voteOptions.style.display = 'none';
+  if (voteConfirmed) voteConfirmed.style.display = 'block';
+  
+  // 更新左上角玩家状态
+  updatePlayerStatusList();
+  
+  broadcast({ type: 'gameAction', action: 'mafia', payload: { id: myPeerId, target: targetId } });
+  checkMafiaVoteEnd();
+}
+
+function checkMafiaVoteEnd() {
+  const alive = gameState.players.filter(p => p.alive);
+  // 确保mafiaVotes对象存在
+  if (!gameState.data.mafiaVotes) gameState.data.mafiaVotes = {};
+  const done = alive.filter(p => gameState.data.mafiaVotes[p.id]).length;
+  const status = document.getElementById('mafia-vote-status');
+  if (status) status.textContent = `${done}/${alive.length} 已投票`;
+
+  if (done >= alive.length) {
+    // 清除倒计时
+    if (mafiaTimerInterval) clearInterval(mafiaTimerInterval);
+    
+    const votes = {};
+    Object.values(gameState.data.mafiaVotes).forEach(id => {
+      votes[id] = (votes[id] || 0) + 1;
+    });
+    const maxVotes = Math.max(...Object.values(votes));
+    const candidates = Object.keys(votes).filter(id => votes[id] === maxVotes);
+    const targetId = candidates.length > 1 ? candidates[randInt(0, candidates.length - 1)] : candidates[0];
+    const target = gameState.players.find(p => p.id === targetId);
+
+    if (target) {
+      target.alive = false;
+      addChat({ text: `⚖️ ${target.name} 被投票处决` }, true);
+      if (targetId === gameState.data.mafiaKiller) {
+        addChat({ text: '🎉 杀手被处决，平民胜利！' }, true);
+      }
+    }
+
+    const remaining = gameState.players.filter(p => p.alive);
+    const killerAlive = remaining.some(p => p.id === gameState.data.mafiaKiller);
+    
+    // 更新玩家状态列表
+    updatePlayerStatusList();
+    
+    // 检查人类玩家是否被淘汰
+    if (!isHumanAlive()) {
+      endGame(null);
+      return;
+    }
+    
+    if (!killerAlive || remaining.length <= 1) {
+      // 杀手已死或只剩1人，游戏结束
+      const winner = remaining.length > 0 ? remaining[0] : null;
+      endGame(winner);
+      return;
+    } else {
+      gameState.data.mafiaPhase = 'night';
+      gameState.data.mafiaKiller = remaining[randInt(0, remaining.length - 1)].id;
+      gameState.data.mafiaVictim = null;
+      gameState.data.mafiaVotes = {};
+      gameState.data.mafiaTimer = 15;
+      broadcast({ type: 'gameState', state: gameState });
+      setTimeout(() => initMafia(document.getElementById('game-area')), 3000);
+    }
+  }
+}
+
+// ==================== LEVEL 9: LAST DINNER ====================
+function initDinner(area) {
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) { endGame(alive[0]); return; }
+
+  // 找到第一个未投票的AI的索引
+  let startTurn = 0;
+  for (let i = 0; i < alive.length; i++) {
+    if (alive[i].isAI && (!gameState.data.dinnerVotes || !gameState.data.dinnerVotes[alive[i].id])) {
+      startTurn = i;
+      break;
+    }
+  }
+  gameState.turn = startTurn;
+
+  if (!gameState.data.dinnerQuestion) {
+    gameState.data.dinnerQuestion = randChoice([
+      '谁最不可信？',
+      '谁最聪明？',
+      '谁最该死？',
+      '谁最自私？',
+      '谁最危险？'
+    ]);
+    gameState.data.dinnerVotes = {};
+  }
+  
+  // 确保dinnerVotes对象存在
+  if (!gameState.data.dinnerVotes) gameState.data.dinnerVotes = {};
+
+  const myVote = gameState.data.dinnerVotes[myPeerId];
+
+  area.innerHTML = `
+    <div style="text-align:center">
+      <div style="color:var(--red-glow);font-size:16px;margin-bottom:10px">最后的晚餐</div>
+      <div style="font-size:14px;margin-bottom:10px">${gameState.data.dinnerQuestion}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">不能投自己 · 得票最高和得0票者都出局</div>
+      <div style="font-size:12px;color:var(--red-glow);margin-bottom:20px;padding:8px;background:rgba(192,57,43,0.1);border:1px solid var(--border);border-radius:4px">
+        ⚠️ 警告：得0票者将直接出局！
+      </div>
+      <div class="vote-options" id="dinner-options">
+        ${alive.filter(p => p.id !== myPeerId).map(p => `
+          <button class="vote-btn ${myVote === p.id ? 'selected' : ''}"
+                  onclick="dinnerVote('${p.id}')">${p.name}</button>
+        `).join('')}
+      </div>
+      <div id="dinner-confirmed" style="display:none;color:var(--green-glow);margin-top:10px;font-size:14px">
+        ✓ 已投票
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)" id="dinner-status">
+        ${alive.filter(p => gameState.data.dinnerVotes[p.id]).length}/${alive.length} 已投票
+      </div>
+    </div>
+  `;
+  
+  // 如果已经投票了
+  if (myVote) {
+    document.getElementById('dinner-options').style.display = 'none';
+    document.getElementById('dinner-confirmed').style.display = 'block';
+  }
+  
+  // AI自动投票 - 轮流制，触发所有未行动的AI
+  setTimeout(() => processAITurn(), 500);
+}
+
+function dinnerVote(targetId) {
+  // 确保dinnerVotes对象存在
+  if (!gameState.data.dinnerVotes) gameState.data.dinnerVotes = {};
+  
+  if (gameState.data.dinnerVotes[myPeerId]) return; // 已经投过了
+  
+  gameState.data.dinnerVotes[myPeerId] = targetId;
+  
+  // 显示已投票
+  const options = document.getElementById('dinner-options');
+  const confirmed = document.getElementById('dinner-confirmed');
+  if (options) options.style.display = 'none';
+  if (confirmed) confirmed.style.display = 'block';
+  
+  // 更新左上角玩家状态
+  updatePlayerStatusList();
+  
+  broadcast({ type: 'gameAction', action: 'dinner', payload: { id: myPeerId, target: targetId } });
+  checkDinnerEnd();
+}
+
+function checkDinnerEnd() {
+  const alive = gameState.players.filter(p => p.alive);
+  // 确保dinnerVotes对象存在
+  if (!gameState.data.dinnerVotes) gameState.data.dinnerVotes = {};
+  const done = alive.filter(p => gameState.data.dinnerVotes[p.id]).length;
+  const status = document.getElementById('dinner-status');
+  if (status) status.textContent = `${done}/${alive.length} 已投票`;
+
+  if (done >= alive.length) {
+    const votes = {};
+    alive.forEach(p => votes[p.id] = 0);
+    Object.values(gameState.data.dinnerVotes).forEach(id => {
+      if (votes[id] !== undefined) votes[id]++;
+    });
+
+    const maxVotes = Math.max(...Object.values(votes));
+    const minVotes = Math.min(...Object.values(votes));
+    const maxIds = Object.keys(votes).filter(id => votes[id] === maxVotes);
+    const minIds = Object.keys(votes).filter(id => votes[id] === minVotes);
+
+    const losers = new Set();
+    maxIds.forEach(id => losers.add(id));
+    
+    // 得0票者出局，但只在4人及以上时生效（避免2-3人游戏过快结束）
+    const aliveCount = alive.length;
+    if (minVotes === 0 && aliveCount >= 4) {
+      minIds.forEach(id => losers.add(id));
+    }
+
+    losers.forEach(id => {
+      const p = gameState.players.find(x => x.id === id);
+      if (p) {
+        p.alive = false;
+        addChat({ text: `${p.name} 被淘汰 (${votes[id]}票)` }, true);
+      }
+    });
+    
+    // 更新玩家状态列表
+    updatePlayerStatusList();
+
+    // 检查人类玩家是否被淘汰
+    if (!isHumanAlive()) {
+      endGame(null);
+      return;
+    }
+
+    const remaining = gameState.players.filter(p => p.alive);
+    if (remaining.length <= 1) {
+      endGame(remaining[0]);
+    } else {
+      gameState.data.dinnerQuestion = randChoice([
+        '谁最不可信？', '谁最聪明？', '谁最该死？', '谁最自私？', '谁最危险？'
+      ]);
+      gameState.data.dinnerVotes = {};
+      broadcast({ type: 'gameState', state: gameState });
+      setTimeout(() => initDinner(document.getElementById('game-area')), 2000);
+    }
+  }
+}
+
+// ==================== LEVEL 10: WHEEL OF FORTUNE ====================
+function initWheel(area) {
+  const alive = gameState.players.filter(p => p.alive);
+  if (alive.length <= 1) { endGame(alive[0]); return; }
+
+  const current = alive[gameState.turn % alive.length];
+
+  area.innerHTML = `
+    <div style="text-align:center">
+      <div style="color:var(--muted);margin-bottom:10px">当前: ${current.name}</div>
+      <div class="fortune-wheel" id="wheel">
+        <div class="fortune-pointer"></div>
+        <div class="fortune-sector" style="background:rgba(192,57,43,0.3);transform:rotate(0deg);clip-path:polygon(0 0,100% 0,100% 100%)">
+          淘汰<br>对手<br>50%
+        </div>
+        <div class="fortune-sector" style="background:rgba(231,76,60,0.3);transform:rotate(180deg);clip-path:polygon(0 0,100% 0,100% 100%)">
+          自己<br>淘汰<br>20%
+        </div>
+        <div class="fortune-sector" style="background:rgba(243,156,18,0.3);transform:rotate(252deg);clip-path:polygon(0 0,100% 0,100% 100%)">
+          同归于尽<br>15%
+        </div>
+        <div class="fortune-sector" style="background:rgba(255,255,255,0.05);transform:rotate(306deg);clip-path:polygon(0 0,100% 0,100% 100%)">
+          再转<br>10%
+        </div>
+        <div class="fortune-sector" style="background:rgba(46,204,113,0.3);transform:rotate(342deg);clip-path:polygon(0 0,100% 0,100% 100%)">
+          直接<br>通关<br>5%
+        </div>
+      </div>
+      <button class="game-btn" id="btn-spin">转动命运</button>
+    </div>
+  `;
+
+  if (current.id === myPeerId || isHost) {
+    document.getElementById('btn-spin').onclick = doSpin;
+  } else {
+    document.getElementById('btn-spin').disabled = true;
+  }
+  
+  // AI自动转动
+  if (current.isAI) {
+    setTimeout(() => processAITurn(), 500);
+  }
+}
+
+function doSpin() {
+  const btn = document.getElementById('btn-spin');
+  btn.disabled = true;
+
+  const wheel = document.getElementById('wheel');
+  const rotations = 5 + Math.random() * 5;
+  const finalAngle = Math.random() * 360;
+  wheel.style.transition = 'transform 3s cubic-bezier(0.2, 0.8, 0.3, 1)';
+  wheel.style.transform = `rotate(${rotations * 360 + finalAngle}deg)`;
+
+  setTimeout(() => {
+    // 计算实际旋转后的角度（考虑多圈旋转）
+    const actualAngle = finalAngle % 360;
+    // 指针在顶部(0度)， sector从0度开始顺时针分布
+    // sector 0-180: kill-opponent (50%)
+    // sector 180-252: self-destruct (20%)  
+    // sector 252-306: mutual (15%)
+    // sector 306-342: retry (10%)
+    // sector 342-360: win (5%)
+    let result;
+    if (actualAngle < 180) result = 'kill-opponent';
+    else if (actualAngle < 252) result = 'self-destruct';
+    else if (actualAngle < 306) result = 'mutual';
+    else if (actualAngle < 342) result = 'retry';
+    else result = 'win';
+
+    handleWheelResult({ result });
+  }, 3000);
+}
+
+function handleWheelResult(payload) {
+  const alive = gameState.players.filter(p => p.alive);
+  const current = alive[gameState.turn % alive.length];
+  const opponent = alive.find(p => p.id !== current.id);
+
+  switch(payload.result) {
+    case 'kill-opponent':
+      if (opponent) opponent.alive = false;
+      addChat({ text: `🎯 ${current.name} 淘汰了 ${opponent?.name || '对手'}！` }, true);
+      showResult('win', '胜利！', `${opponent?.name || '对手'} 被淘汰`);
+      break;
+    case 'self-destruct':
+      current.alive = false;
+      addChat({ text: `💥 ${current.name} 自爆！` }, true);
+      showResult('lose', '自爆！', `${current.name} 淘汰了自己`);
+      break;
+    case 'mutual':
+      alive.forEach(p => p.alive = false);
+      addChat({ text: '💀 同归于尽！无人生还！' }, true);
+      showResult('draw', '同归于尽', '全部失败');
+      break;
+    case 'retry':
+      addChat({ text: '🔄 再转一次' }, true);
+      showResult('win', '再转一次', '命运给了第二次机会');
+      setTimeout(() => { hideResult(); initWheel(document.getElementById('game-area')); }, 1500);
+      return;
+    case 'win':
+      alive.filter(p => p.id !== current.id).forEach(p => p.alive = false);
+      addChat({ text: `👑 ${current.name} 直接通关！` }, true);
+      showResult('win', '通关！', `${current.name} 获得胜利`);
+      break;
+  }
+  
+  // 更新玩家状态列表
+  updatePlayerStatusList();
+
+  broadcast({ type: 'gameState', state: gameState });
+
+  setTimeout(() => {
+    hideResult();
+    // 检查人类玩家是否被淘汰
+    if (!isHumanAlive()) {
+      endGame(null);
+      return;
+    }
+    const remaining = gameState.players.filter(p => p.alive);
+    if (remaining.length <= 1 || payload.result === 'mutual') {
+      endGame(remaining[0]);
+    } else {
+      gameState.turn++;
+      initWheel(document.getElementById('game-area'));
+    }
+  }, 2000);
+}
+
+// ==================== GAME END ====================
+// 检查人类玩家是否存活
+function isHumanAlive() {
+  return gameState && gameState.players.some(p => !p.isAI && p.alive);
+}
+
+// 获取人类玩家
+function getHumanPlayer() {
+  return gameState ? gameState.players.find(p => !p.isAI) : null;
+}
+
+function endGame(winner) {
+  // 如果人类玩家被淘汰，显示失败
+  const human = getHumanPlayer();
+  if (human && !human.alive) {
+    addChat({ text: `💀 ${human.name} 已被淘汰，游戏结束` }, true);
+    showResult('lose', '游戏结束', '你已被淘汰，AI继续游戏...');
+    
+    // 延迟后返回房间
+    setTimeout(() => {
+      hideResult();
+      showScreen('screen-room');
+      gameState = null;
+      players.forEach(p => { p.ready = false; p.alive = true; });
+      myReady = false;
+      if (window.isSoloMode) {
+        players.forEach(p => { if (p.isAI) p.ready = true; });
+      }
+      updatePlayerList();
+      broadcast({ type: 'playerList', players: players });
+    }, 3000);
+    return;
+  }
+  
+  if (winner) {
+    addChat({ text: `🏆 ${winner.name} 获得胜利！` }, true);
+    showResult('win', '游戏结束', `${winner.name} 获得胜利！`);
+  } else {
+    addChat({ text: '💀 无人生还...' }, true);
+    showResult('lose', '游戏结束', '无人生还...');
+  }
+  
+  // 重置游戏状态但保留房间
+  setTimeout(() => {
+    hideResult();
+    showScreen('screen-room');
+    
+    // 完全重置游戏状态
+    gameState = null;
+    
+    // 重置玩家准备状态
+    players.forEach(p => {
+      p.ready = false;
+      p.alive = true;
+    });
+    myReady = false;
+    
+    // 单人模式：AI自动准备
+    if (window.isSoloMode) {
+      players.forEach(p => {
+        if (p.isAI) p.ready = true;
+      });
+    }
+    
+    // 更新UI
+    const btnReady = document.getElementById('btn-ready');
+    if (btnReady) {
+      btnReady.textContent = '准备';
+      btnReady.className = 'btn btn-primary';
+    }
+    updatePlayerList();
+    
+    // 清空聊天
+    const chatBox = document.getElementById('chat-messages');
+    if (chatBox) chatBox.innerHTML = '';
+    
+    broadcast({ type: 'playerList', players: players });
+  }, 3000);
+}
+
+function renderGame() {
+  if (gameState && gameState.level) {
+    initLevel(gameState.level);
+  }
+}
+
+// ==================== THREE.JS BACKGROUND ====================
+function initThree() {
+  const canvas = document.getElementById('three-canvas');
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x050508, 0.03);
+
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 3, 6);
+  camera.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0x202020, 0.3);
+  scene.add(ambient);
+
+  const point = new THREE.PointLight(0xc0392b, 0.6, 15);
+  point.position.set(0, 4, 0);
+  scene.add(point);
+
+  const spot = new THREE.SpotLight(0xf39c12, 0.3, 20, Math.PI / 6, 0.5);
+  spot.position.set(5, 8, 5);
+  scene.add(spot);
+
+  // Table (简化)
+  const tableGeo = new THREE.CylinderGeometry(3, 3, 0.2, 16);
+  const tableMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.9 });
+  const table = new THREE.Mesh(tableGeo, tableMat);
+  table.position.y = -0.1;
+  scene.add(table);
+
+  // Cards floating (减少数量，降低干扰)
+  const cards = [];
+  for (let i = 0; i < 3; i++) {
+    const geo = new THREE.BoxGeometry(0.6, 0.01, 0.9);
+    const mat = new THREE.MeshStandardMaterial({
+      color: i % 2 === 0 ? 0xffffff : 0xcc0000,
+      roughness: 0.3
+    });
+    const card = new THREE.Mesh(geo, mat);
+    card.position.set(
+      (Math.random() - 0.5) * 4,
+      Math.random() * 2 + 0.5,
+      (Math.random() - 0.5) * 4
+    );
+    card.rotation.y = Math.random() * Math.PI;
+    card.userData = {
+      speed: Math.random() * 0.01 + 0.005,
+      offset: Math.random() * Math.PI * 2
+    };
+    scene.add(card);
+    cards.push(card);
+  }
+
+  // Particles (减少数量，降低干扰)
+  const particleGeo = new THREE.BufferGeometry();
+  const particleCount = 50;
+  const positions = new Float32Array(particleCount * 3);
+  for (let i = 0; i < particleCount * 3; i++) {
+    positions[i] = (Math.random() - 0.5) * 10;
+  }
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const particleMat = new THREE.PointsMaterial({ color: 0xc0392b, size: 0.02, transparent: true, opacity: 0.3 });
+  const particles = new THREE.Points(particleGeo, particleMat);
+  scene.add(particles);
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const time = Date.now() * 0.001;
+
+    cards.forEach(card => {
+      card.position.y += Math.sin(time + card.userData.offset) * 0.002;
+      card.rotation.y += card.userData.speed;
+    });
+
+    particles.rotation.y = time * 0.05;
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
+
+// ==================== INIT ====================
+window.onload = () => {
+  initThree();
+  initNameScreen();
+  initMenu();
+  initLevelSelect();
+  initJoinScreen();
+  initRoomScreen();
+  initGameScreen();
+};
+</script>
+</body>
+</html>
